@@ -1,4 +1,4 @@
-package com.ifscxxe.relatorios_offline.providers;
+package com.ifscxxe.relatorios_offline.core.providers;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 @Component
@@ -43,7 +44,7 @@ public class JWTprovider {
         claims.put("roles", userDetails.getAuthorities()
                 .stream()
                 .map(GrantedAuthority::getAuthority)
-                .toList()
+                .collect(Collectors.toList())
         );
 
         return Jwts.builder()
@@ -66,7 +67,6 @@ public class JWTprovider {
         return getAllClaims(token).getSubject();
     }
 
-    @SuppressWarnings("unchecked")
     public Collection<? extends GrantedAuthority> getAuthorities(String token) {
         Claims claims = getAllClaims(token);
         Object rolesObj = claims.get("roles");
@@ -77,7 +77,7 @@ public class JWTprovider {
                     .map(SimpleGrantedAuthority::new)
                     .collect(Collectors.toList());
         }
-        return List.of();
+        return Collections.emptyList();
     }
 
     public Authentication getAuthentication(String token) {

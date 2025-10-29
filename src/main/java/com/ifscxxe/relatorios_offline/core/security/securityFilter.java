@@ -1,6 +1,6 @@
-package com.ifscxxe.relatorios_offline.security;
+package com.ifscxxe.relatorios_offline.core.security;
 
-import com.ifscxxe.relatorios_offline.providers.JWTprovider;
+import com.ifscxxe.relatorios_offline.core.providers.JWTprovider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
