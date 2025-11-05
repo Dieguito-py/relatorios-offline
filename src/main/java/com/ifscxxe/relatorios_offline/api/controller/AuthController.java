@@ -81,7 +81,6 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "usuário já existe"));
         }
 
-        // Map roles coming from frontend to enum values, ignoring blanks and duplicates
         Set<Role> roleSet = request.roles().stream()
                 .filter(r -> r != null && !r.isBlank())
                 .map(Role::fromString)
@@ -93,7 +92,10 @@ public class AuthController {
         }
 
         String encoded = passwordEncoder.encode(request.password());
-        Usuario usuario = new Usuario(request.username(), encoded, roleSet);
+        Usuario usuario = new Usuario();
+        usuario.setUsername(request.username());
+        usuario.setPassword(encoded);
+        usuario.setRoles(roleSet);
         Usuario saved = usuarioRepository.save(usuario);
 
         List<String> normalizedRoles = saved.getRoles().stream()

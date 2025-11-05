@@ -1,9 +1,16 @@
 package com.ifscxxe.relatorios_offline.usuario.model;
 
+import com.ifscxxe.relatorios_offline.coordenadoria.model.CoordenadoriaMunicipal;
+import com.ifscxxe.relatorios_offline.coordenadoria.model.Regional;
+import com.ifscxxe.relatorios_offline.relatorio.model.Relatorio;
 import jakarta.persistence.*;
+import lombok.Data;
+
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+@Data
 @Entity
 @Table(name = "usuarios", uniqueConstraints = {
         @UniqueConstraint(name = "uk_usuario_username", columnNames = "username")
@@ -26,23 +33,13 @@ public class Usuario {
     @Column(name = "role", nullable = false, length = 30)
     private Set<Role> roles = new HashSet<>();
 
-    public Usuario() {}
+    @ManyToOne
+    @JoinColumn(name = "coordenadoria_municipal_id")
+    private CoordenadoriaMunicipal coordenadoriaMunicipal;
+    @ManyToOne
+    @JoinColumn(name = "regional_id")
+    private Regional regional;
 
-    public Usuario(String username, String password, Set<Role> roles) {
-        this.username = username;
-        this.password = password;
-        if (roles != null) this.roles = roles;
-    }
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
-
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-
-    public Set<Role> getRoles() { return roles; }
-    public void setRoles(Set<Role> roles) { this.roles = roles; }
+    @OneToMany(mappedBy = "usuario")
+    private List<Relatorio> relatorios;
 }
