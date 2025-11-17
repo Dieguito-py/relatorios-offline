@@ -14,7 +14,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,7 +59,7 @@ public class AuthController {
                             .build();
 
                     String token = jwtProvider.generateToken(userDetails);
-                    return ResponseEntity.ok(new LoginResponse(token));
+                    return ResponseEntity.ok(new LoginResponse(token, usuario.getNome()));
                 })
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "credenciais inválidas")));
     }
@@ -126,7 +125,7 @@ public class AuthController {
     }
 
     public record LoginRequest(String username, String password) {}
-    public record LoginResponse(String token) {}
+    public record LoginResponse(String token, String nome) {}
     public record RegisterRequest(String username, String password, List<String> roles) {}
     public record RegisterResponse(String username, List<String> roles) {}
 }
