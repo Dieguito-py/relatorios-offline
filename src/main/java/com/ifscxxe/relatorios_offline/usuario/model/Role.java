@@ -2,7 +2,8 @@ package com.ifscxxe.relatorios_offline.usuario.model;
 
 public enum Role {
     USER,
-    ADMIN;
+    ADMIN,
+    SUPERADMIN;
 
     public static Role fromString(String value) {
         if (value == null) return null;

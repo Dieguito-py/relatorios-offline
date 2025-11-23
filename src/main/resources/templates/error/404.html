@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::content}, ~{::custom-styles}, ~{::custom-scripts})}">
+<head>
+    <meta charset="UTF-8">
+    <title>Página não encontrada</title>
+</head>
+<body>
+<th:block th:fragment="custom-styles">
+    <style>
+        .error-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            text-align: center;
+        }
+
+        .error-code {
+            font-size: 6rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .error-card {
+            background: white;
+            border-radius: 16px;
+            padding: 3rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            max-width: 560px;
+            width: 100%;
+        }
+
+        .error-card p {
+            margin-bottom: 1.5rem;
+            color: #6c757d;
+        }
+
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-outline-primary:hover {
+            color: #fff;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+    </style>
+</th:block>
+
+<th:block th:fragment="content">
+    <div class="error-wrapper">
+        <div class="error-card">
+            <div class="error-code">404</div>
+            <h1>Página não encontrada</h1>
+            <p>O endereço acessado não existe ou foi movido. Verifique o link ou volte para a página inicial.</p>
+            <div class="d-flex gap-3 justify-content-center flex-wrap">
+                <a href="/" class="btn btn-primary">
+                    <i class="bi bi-house-door"></i> Página inicial
+                </a>
+                <a href="/relatorios" class="btn btn-outline-primary">
+                    <i class="bi bi-file-earmark-text"></i> Ir para relatórios
+                </a>
+            </div>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="custom-scripts"></th:block>
+</body>
+</html>
+

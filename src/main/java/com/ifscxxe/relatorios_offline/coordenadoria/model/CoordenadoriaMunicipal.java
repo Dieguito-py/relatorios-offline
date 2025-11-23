@@ -20,6 +20,6 @@ public class CoordenadoriaMunicipal {
     @JoinColumn(name = "regional_id")
     private Regional regional;
 
-    @OneToMany(mappedBy = "coordenadoriaMunicipal")
+    @OneToMany(mappedBy = "coordenadoriaMunicipal", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Usuario> usuarios;
 }
