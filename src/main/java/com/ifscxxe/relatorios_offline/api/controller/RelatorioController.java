@@ -21,13 +21,13 @@ public class RelatorioController {
     private final RelatorioRepository relatorioRepository;
     private final UsuarioRepository usuarioRepository;
 
-    public RelatorioController(RelatorioRepository relatorioRepository, UsuarioRepository usuarioRepository) {
+    public RelatorioController(RelatorioRepository relatorioRepository,
+                               UsuarioRepository usuarioRepository) {
         this.relatorioRepository = relatorioRepository;
         this.usuarioRepository = usuarioRepository;
     }
 
-    @PostMapping
-    @RequestMapping("/criar")
+    @PostMapping(path = "/criar")
     public ResponseEntity<?> criarRelatorio(@RequestBody RelatorioRequest request) {
         if (request == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -94,6 +94,9 @@ public class RelatorioController {
             relatorio.setOutrasNecessidades(request.outrasNecessidades());
             relatorio.setObservacaoAssistencia(request.observacaoAssistencia());
 
+            relatorio.setLatitude(request.latitude());
+            relatorio.setLongitude(request.longitude());
+
             relatorio.setUsuario(usuario);
             relatorio.setCoordenadoriaMunicipal(usuario.getCoordenadoriaMunicipal());
 
@@ -114,6 +117,9 @@ public class RelatorioController {
 
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", ex.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Erro ao criar relatório: " + e.getMessage()));
@@ -164,7 +170,9 @@ public class RelatorioController {
             Integer qtdRoupas,
             String outrasNecessidades,
             String observacaoAssistencia,
-            Long coordenadoriaMunicipalId
+            Long coordenadoriaMunicipalId,
+            String latitude,
+            String longitude
     ) {}
 
     public record RelatorioResponse(

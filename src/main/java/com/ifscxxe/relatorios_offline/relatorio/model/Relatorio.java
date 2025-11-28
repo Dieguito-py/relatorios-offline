@@ -64,6 +64,9 @@ public class Relatorio {
     private String outrasNecessidades;
     private String observacaoAssistencia;
 
+    private String latitude;
+    private String longitude;
+
     @ManyToOne
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
