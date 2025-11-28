@@ -9,6 +9,6 @@ import java.util.List;
 
 @Repository
 public interface RelatorioRepository extends JpaRepository<Relatorio, Long> {
-    List<Relatorio> findByCoordenadoriaMunicipalId(Long coordenadoriaId);
-    List<Relatorio> findByCoordenadoriaMunicipalIdAndDataDesastreBetween(Long coordenadoriaId, LocalDateTime inicio, LocalDateTime fim);
+    List<Relatorio> findByCoordenadoriaMunicipalIdOrderByIdDesc(Long coordenadoriaId);
+    List<Relatorio> findByCoordenadoriaMunicipalIdAndDataDesastreBetweenOrderByDataDesastreDesc(Long coordenadoriaId, LocalDateTime inicio, LocalDateTime fim);
 }

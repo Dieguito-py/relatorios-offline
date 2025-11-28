@@ -44,7 +44,7 @@ public class ConsultarRelatorioController {
             if (usuario != null && usuario.getCoordenadoriaMunicipal() != null) {
                 Long coordenadoriaId = usuario.getCoordenadoriaMunicipal().getId();
                 if (inicio == null && fim == null) {
-                    relatorios = relatorioRepository.findByCoordenadoriaMunicipalId(coordenadoriaId);
+                    relatorios = relatorioRepository.findByCoordenadoriaMunicipalIdOrderByIdDesc(coordenadoriaId);
                 } else {
                     LocalDateTime inicioDateTime = inicio != null
                             ? inicio.atStartOfDay()
@@ -52,7 +52,7 @@ public class ConsultarRelatorioController {
                     LocalDateTime fimDateTime = fim != null
                             ? fim.atTime(LocalTime.MAX)
                             : LocalDate.of(9999, Month.DECEMBER, 31).atTime(LocalTime.MAX);
-                    relatorios = relatorioRepository.findByCoordenadoriaMunicipalIdAndDataDesastreBetween(
+                    relatorios = relatorioRepository.findByCoordenadoriaMunicipalIdAndDataDesastreBetweenOrderByDataDesastreDesc(
                             coordenadoriaId,
                             inicioDateTime,
                             fimDateTime

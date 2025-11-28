@@ -95,6 +95,7 @@ public class RelatorioController {
             relatorio.setObservacaoAssistencia(request.observacaoAssistencia());
 
             relatorio.setUsuario(usuario);
+            relatorio.setCoordenadoriaMunicipal(usuario.getCoordenadoriaMunicipal());
 
             if (request.coordenadoriaMunicipalId() != null) {
                 CoordenadoriaMunicipal coordenadoria = new CoordenadoriaMunicipal();
