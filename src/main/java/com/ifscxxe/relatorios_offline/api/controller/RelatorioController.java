@@ -96,6 +96,7 @@ public class RelatorioController {
 
             relatorio.setLatitude(request.latitude());
             relatorio.setLongitude(request.longitude());
+            relatorio.setFotoResidencia(request.fotoResidencia());
 
             relatorio.setUsuario(usuario);
             relatorio.setCoordenadoriaMunicipal(usuario.getCoordenadoriaMunicipal());
@@ -172,7 +173,8 @@ public class RelatorioController {
             String observacaoAssistencia,
             Long coordenadoriaMunicipalId,
             String latitude,
-            String longitude
+            String longitude,
+            String fotoResidencia
     ) {}
 
     public record RelatorioResponse(

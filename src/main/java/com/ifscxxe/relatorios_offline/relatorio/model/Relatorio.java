@@ -67,6 +67,9 @@ public class Relatorio {
     private String latitude;
     private String longitude;
 
+    @Column(name = "foto_residencia", columnDefinition = "TEXT")
+    private String fotoResidencia;
+
     @ManyToOne
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
