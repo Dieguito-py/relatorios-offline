@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::content}, ~{::custom-styles}, ~{::custom-scripts})}">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalhes do Relatório</title>
+</head>
+<body>
+<th:block th:fragment="custom-styles">
+    <style>
+        .detail-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+        }
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        .data-label {
+            font-weight: 600;
+            color: #555;
+        }
+        .data-value {
+            color: #111;
+        }
+        .back-link {
+            text-decoration: none;
+        }
+    </style>
+</th:block>
+
+<th:block th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a href="/relatorios/consultarRelatorios" class="back-link text-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar para lista
+            </a>
+            <h2 class="mt-2 mb-0">Detalhes do Relatório</h2>
+            <p class="text-muted mb-0" th:text="${#temporals.format(relatorio.dataDesastre, 'dd/MM/yyyy HH:mm')}">
+                01/01/2024 12:00
+            </p>
+        </div>
+        <div>
+            <form th:action="@{/relatorios/exportar}" method="get" class="d-inline">
+                <input type="hidden" name="relatorioId" th:value="${relatorio.id}">
+                <input type="hidden" name="format" value="pdf">
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="detail-card">
+        <div class="section-title">Dados da Ocorrência</div>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="data-label">Nome</div>
+                <div class="data-value" th:text="${relatorio.nomeAtingido}">Nome Completo</div>
+            </div>
+            <div class="col-md-4">
+                <div class="data-label">CPF</div>
+                <div class="data-value" th:text="${relatorio.cpfAtingido}">000.000.000-00</div>
+            </div>
+            <div class="col-md-4">
+                <div class="data-label">RG</div>
+                <div class="data-value" th:text="${relatorio.rgAtingido}">0.000.000</div>
+            </div>
+            <div class="col-md-4">
+                <div class="data-label">Data de nascimento</div>
+                <div class="data-value" th:text="${#temporals.format(relatorio.dataNascimentoAtingido, 'dd/MM/yyyy')}">01/01/1980</div>
+            </div>
+            <div class="col-md-8">
+                <div class="data-label">Endereço</div>
+                <div class="data-value">
+                    <span th:text="${relatorio.enderecoAtingido}">Endereço</span>,
+                    <span th:text="${relatorio.bairroAtingido}">Bairro</span> -
+                    <span th:text="${relatorio.cidadeAtingido}">Cidade</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="data-label">Complemento</div>
+                <div class="data-value" th:text="${relatorio.complementoAtingido}">Complemento</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-card">
+        <div class="section-title">Situação da Moradia</div>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="data-label">Moradia</div>
+                <div class="data-value" th:text="${relatorio.moradia}">Própria</div>
+            </div>
+            <div class="col-md-4">
+                <div class="data-label">Tipo construção</div>
+                <div class="data-value" th:text="${relatorio.tipoConstrucao}">Alvenaria</div>
+            </div>
+            <div class="col-md-4">
+                <div class="data-label">Dano</div>
+                <div class="data-value" th:text="${relatorio.danoResidencia}">Parcial</div>
+            </div>
+            <div class="col-md-4">
+                <div class="data-label">Ocupação</div>
+                <div class="data-value" th:text="${relatorio.ocupacao}">Residencial</div>
+            </div>
+            <div class="col-md-4">
+                <div class="data-label">Alternativa moradia</div>
+                <div class="data-value" th:text="${relatorio.alternativaMoradia}">Familiares</div>
+            </div>
+            <div class="col-md-12">
+                <div class="data-label">Observações</div>
+                <div class="data-value" th:text="${relatorio.observacaoImovel}">Observações sobre o imóvel</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-card">
+        <div class="section-title">Composição Familiar</div>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="data-label">Total de pessoas</div>
+                <div class="data-value" th:text="${relatorio.numeroTotalPessoas}">0</div>
+            </div>
+            <div class="col-md-3">
+                <div class="data-label">0 a 12 anos</div>
+                <div class="data-value" th:text="${relatorio.menores0a12}">0</div>
+            </div>
+            <div class="col-md-3">
+                <div class="data-label">13 a 17 anos</div>
+                <div class="data-value" th:text="${relatorio.menores13a17}">0</div>
+            </div>
+            <div class="col-md-3">
+                <div class="data-label">18 a 59 anos</div>
+                <div class="data-value" th:text="${relatorio.maiores18a59}">0</div>
+            </div>
+            <div class="col-md-3">
+                <div class="data-label">60+ anos</div>
+                <div class="data-value" th:text="${relatorio.idosos60mais}">0</div>
+            </div>
+            <div class="col-md-3">
+                <div class="data-label">Necessidades especiais</div>
+                <div class="data-value" th:text="${relatorio.possuiNecessidadesEspeciais} ? 'Sim' : 'Não'">Não</div>
+            </div>
+            <div class="col-md-3">
+                <div class="data-label">Qtd necessidades</div>
+                <div class="data-value" th:text="${relatorio.quantidadeNecessidadesEspeciais}">0</div>
+            </div>
+            <div class="col-md-3">
+                <div class="data-label">Uso medicamento contínuo</div>
+                <div class="data-value" th:text="${relatorio.usoMedicamentoContinuo} ? 'Sim' : 'Não'">Não</div>
+            </div>
+            <div class="col-md-3">
+                <div class="data-label">Medicamento</div>
+                <div class="data-value" th:text="${relatorio.medicamento}">Medicamento</div>
+            </div>
+            <div class="col-md-3">
+                <div class="data-label">Desaparecidos?</div>
+                <div class="data-value" th:text="${relatorio.possuiDesaparecidos} ? 'Sim' : 'Não'">Não</div>
+            </div>
+            <div class="col-md-3">
+                <div class="data-label">Qtd desaparecidos</div>
+                <div class="data-value" th:text="${relatorio.quantidadeDesaparecidos}">0</div>
+            </div>
+            <div class="col-md-3">
+                <div class="data-label">Qtd feridos</div>
+                <div class="data-value" th:text="${relatorio.quantidadeFeridos}">0</div>
+            </div>
+            <div class="col-md-3">
+                <div class="data-label">Qtd óbitos</div>
+                <div class="data-value" th:text="${relatorio.quantidadeObitos}">0</div>
+            </div>
+            <div class="col-md-12">
+                <div class="data-label">Observações necessidade</div>
+                <div class="data-value" th:text="${relatorio.observacaoNecessidades}">Observações</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-card">
+        <div class="section-title">Assistência Necessária</div>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="data-label">Água potável (5L)</div>
+                <div class="data-value" th:text="${relatorio.qtdAguaPotavel5L} ?: 0">0</div>
+            </div>
+            <div class="col-md-3">
+                <div class="data-label">Colchões solteiro</div>
+                <div class="data-value" th:text="${relatorio.qtdColchoesSolteiro} ?: 0">0</div>
+            </div>
+            <div class="col-md-3">
+                <div class="data-label">Colchões casal</div>
+                <div class="data-value" th:text="${relatorio.qtdColchoesCasal} ?: 0">0</div>
+            </div>
+            <div class="col-md-3">
+                <div class="data-label">Cestas básicas</div>
+                <div class="data-value" th:text="${relatorio.qtdCestasBasicas} ?: 0">0</div>
+            </div>
+            <div class="col-md-3">
+                <div class="data-label">Kits higiene pessoal</div>
+                <div class="data-value" th:text="${relatorio.qtdKitHigienePessoal} ?: 0">0</div>
+            </div>
+            <div class="col-md-3">
+                <div class="data-label">Kits limpeza</div>
+                <div class="data-value" th:text="${relatorio.qtdKitLimpeza} ?: 0">0</div>
+            </div>
+            <div class="col-md-3">
+                <div class="data-label">Móveis</div>
+                <div class="data-value" th:text="${relatorio.qtdMoveis} ?: 0">0</div>
+            </div>
+            <div class="col-md-3">
+                <div com class="data-label">Telhas 6mm</div>
+                <div class="data-value" th:text="${relatorio.qtdTelhas6mm} ?: 0">0</div>
+            </div>
+            <div class="col-md-3">
+                <div class="data-label">Telhas 4mm</div>
+                <div class="data-value" th:text="${relatorio.qtdTelhas4mm} ?: 0">0</div>
+            </div>
+            <div class="col-md-3">
+                <div class="data-label">Roupas</div>
+                <div class="data-value" th:text="${relatorio.qtdRoupas} ?: 0">0</div>
+            </div>
+            <div class="col-md-12">
+                <div class="data-label">Outras necessidades</div>
+                <div class="data-value" th:text="${relatorio.outrasNecessidades} ?: '-'">Outras</div>
+            </div>
+            <div class="col-md-12">
+                <div class="data-label">Observações assistência</div>
+                <div class="data-value" th:text="${relatorio.observacaoAssistencia} ?: '-'">Observações</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-card">
+        <div class="section-title">Localização</div>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="data-label">Latitude</div>
+                <div class="data-value" th:text="${relatorio.latitude}">0</div>
+            </div>
+            <div class="col-md-4">
+                <div class="data-label">Longitude</div>
+                <div class="data-value" th:text="${relatorio.longitude}">0</div>
+            </div>
+            <div class="col-md-4">
+                <div class="data-label d-flex align-items-center gap-2">
+                    Localização Google Maps
+                </div>
+                <div class="data-value d-flex align-items-center gap-2">
+                    <span th:text="${relatorio.localizacao}">Referência</span>
+                    <a th:if="${googleMapsUrl}" th:href="${googleMapsUrl}" target="_blank" rel="noopener"
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-geo-alt"></i> Abrir no Google Maps
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3" th:if="${fotoResidenciaUrl}">
+            <div class="data-label">Foto residência</div>
+            <img th:src="${fotoResidenciaUrl}" alt="Foto da residência" class="img-fluid rounded">
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="custom-scripts"></th:block>
+</body>
+</html>

@@ -87,11 +87,12 @@
                     <th>Cidade</th>
                     <th>Moradia</th>
                     <th>Dano residência</th>
+                    <th>Ações</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:if="${relatorios == null || #lists.isEmpty(relatorios)}">
-                    <td colspan="5" class="text-center text-muted py-5">
+                    <td colspan="6" class="text-center text-muted py-5">
                         Nenhum relatório encontrado para a coordenadoria atual.
                     </td>
                 </tr>
@@ -101,6 +102,11 @@
                     <td th:text="${relatorio.cidadeAtingido}">Cidade</td>
                     <td th:text="${relatorio.moradia}">Moradia</td>
                     <td th:text="${relatorio.danoResidencia}">Dano</td>
+                    <td>
+                        <a th:href="@{/relatorios/{id}(id=${relatorio.id})}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i> Ver detalhes
+                        </a>
+                    </td>
                 </tr>
                 </tbody>
             </table>

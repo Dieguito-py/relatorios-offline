@@ -9,7 +9,9 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -19,6 +21,7 @@ import java.time.LocalTime;
 import java.time.Month;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/relatorios")
@@ -64,5 +67,41 @@ public class ConsultarRelatorioController {
         model.addAttribute("inicio", inicio);
         model.addAttribute("fim", fim);
         return "relatorio/consultarRelatorios";
+    }
+
+    @GetMapping("/{id}")
+    public String detalhar(@PathVariable Long id, Authentication authentication, Model model) {
+        if (authentication == null) {
+            return "redirect:/login";
+        }
+        Optional<Usuario> usuarioOpt = usuarioRepository.findByUsername(authentication.getName());
+        if (usuarioOpt.isEmpty() || usuarioOpt.get().getCoordenadoriaMunicipal() == null) {
+            model.addAttribute("error", "Usuário sem coordenadoria associada.");
+            return "redirect:/relatorios/consultarRelatorios";
+        }
+        Long coordenadoriaId = usuarioOpt.get().getCoordenadoriaMunicipal().getId();
+        Optional<Relatorio> relatorioOpt = relatorioRepository.findByIdAndCoordenadoriaMunicipalId(id, coordenadoriaId);
+        if (relatorioOpt.isEmpty()) {
+            model.addAttribute("error", "Relatório não encontrado ou indisponível.");
+            return "redirect:/relatorios/consultarRelatorios";
+        }
+        Relatorio relatorio = relatorioOpt.get();
+        model.addAttribute("relatorio", relatorio);
+
+        String fotoResidenciaUrl = null;
+        if (StringUtils.hasText(relatorio.getFotoResidencia())) {
+            fotoResidenciaUrl = relatorio.getFotoResidencia().startsWith("http")
+                    ? relatorio.getFotoResidencia()
+                    : "data:image/jpeg;base64," + relatorio.getFotoResidencia();
+        }
+        model.addAttribute("fotoResidenciaUrl", fotoResidenciaUrl);
+
+        if (StringUtils.hasText(relatorio.getLatitude()) && StringUtils.hasText(relatorio.getLongitude())) {
+            model.addAttribute("googleMapsUrl",
+                    "https://www.google.com/maps/search/?api=1&query=" + relatorio.getLatitude() + "," + relatorio.getLongitude());
+        }
+
+        model.addAttribute("pageTitle", "Detalhes do Relatório");
+        return "relatorio/detalheRelatorio";
     }
 }
