@@ -9,11 +9,13 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -71,8 +73,9 @@ public class ExportarRelatorioController {
         if ("xlsx".equalsIgnoreCase(format)) {
             gerarExcel(relatorios, response);
         } else if ("pdf".equalsIgnoreCase(format)) {
-            // TODO: Implementar exportação PDF no futuro
-            response.sendError(HttpServletResponse.SC_NOT_IMPLEMENTED, "Exportação PDF ainda não implementada");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Exportação PDF ainda não implementada");
+        } else {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Formato de exportação não suportado: " + format);
         }
     }
 

@@ -69,7 +69,7 @@ public class ConsultarRelatorioController {
         return "relatorio/consultarRelatorios";
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:\\d+}")
     public String detalhar(@PathVariable Long id, Authentication authentication, Model model) {
         if (authentication == null) {
             return "redirect:/login";

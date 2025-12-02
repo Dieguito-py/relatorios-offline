@@ -31,6 +31,11 @@
         .back-link {
             text-decoration: none;
         }
+        .foto-residencia {
+            max-width: 100%;
+            max-height: 400px;
+            object-fit: cover;
+        }
     </style>
 </th:block>
 
@@ -262,7 +267,7 @@
         </div>
         <div class="mt-3" th:if="${fotoResidenciaUrl}">
             <div class="data-label">Foto residência</div>
-            <img th:src="${fotoResidenciaUrl}" alt="Foto da residência" class="img-fluid rounded">
+            <img th:src="${fotoResidenciaUrl}" alt="Foto da residência" class="img-fluid rounded foto-residencia">
         </div>
     </div>
 </th:block>
