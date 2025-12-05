@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::content}, ~{::custom-styles}, ~{::custom-scripts})}">
+<head>
+    <meta charset="UTF-8">
+    <title>Novo Usuário</title>
+</head>
+<body>
+<th:block th:fragment="custom-styles"></th:block>
+
+<th:block th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Criar novo usuário</h1>
+        <a href="/superadmin/usuarios" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form th:action="@{/superadmin/usuarios}" th:object="${usuario}" method="post">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Nome completo</label>
+                        <input type="text" th:field="*{nome}" class="form-control" required>
+                        <div class="text-danger" th:if="${#fields.hasErrors('nome')}" th:errors="*{nome}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nome de usuário</label>
+                        <input type="text" th:field="*{username}" class="form-control" required>
+                        <div class="text-danger" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Senha</label>
+                        <input type="password" th:field="*{password}" class="form-control" required minlength="6">
+                        <div class="text-danger" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Coordenadoria Municipal</label>
+                        <select th:field="*{coordenadoriaMunicipal.id}" class="form-select" required>
+                            <option value="" disabled selected>Selecione</option>
+                            <option th:each="coord : ${coordenadorias}"
+                                    th:value="${coord.id}"
+                                    th:text="${coord.nome + ' - ' + (coord.regional != null ? coord.regional.nome : 'Sem regional')}">
+                            </option>
+                        </select>
+                        <div class="text-danger" th:if="${#fields.hasErrors('coordenadoriaMunicipal')}" th:errors="*{coordenadoriaMunicipal}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Permissões</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <div class="form-check" th:each="role : ${rolesDisponiveis}">
+                                <input class="form-check-input" type="checkbox"
+                                       th:value="${role}"
+                                       th:field="*{roles}"
+                                       th:id="${'role-' + role}">
+                                <label class="form-check-label" th:for="${'role-' + role}" th:text="${role}"></label>
+                            </div>
+                        </div>
+                        <div class="text-danger" th:if="${#fields.hasErrors('roles')}" th:errors="*{roles}"></div>
+                    </div>
+                </div>
+                <div class="mt-4 d-flex justify-content-end gap-2">
+                    <a href="/superadmin/usuarios" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="custom-scripts"></th:block>
+</body>
+</html>

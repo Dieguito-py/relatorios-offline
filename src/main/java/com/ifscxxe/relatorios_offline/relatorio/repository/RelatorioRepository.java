@@ -13,4 +13,5 @@ public interface RelatorioRepository extends JpaRepository<Relatorio, Long> {
     List<Relatorio> findByCoordenadoriaMunicipalIdOrderByIdDesc(Long coordenadoriaId);
     List<Relatorio> findByCoordenadoriaMunicipalIdAndDataDesastreBetweenOrderByDataDesastreDesc(Long coordenadoriaId, LocalDateTime inicio, LocalDateTime fim);
     Optional<Relatorio> findByIdAndCoordenadoriaMunicipalId(Long id, Long coordenadoriaId);
+    List<Relatorio> findByUsuarioIdOrderByDataDesastreDesc(Long usuarioId);
 }
