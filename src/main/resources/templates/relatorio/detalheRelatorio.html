@@ -110,6 +110,14 @@
                     <div class="data-value" th:text="${relatorio.danoResidencia}">Parcial</div>
                 </div>
                 <div class="col-md-4">
+                    <div class="data-label">Estimativa dano móveis</div>
+                    <div class="data-value" th:text="${relatorio.estimativaDanoMoveis != null ? 'R$ ' + #numbers.formatDecimal(relatorio.estimativaDanoMoveis, 2, 2) : '-'}">R$ 0,00</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="data-label">Estimativa dano edificação</div>
+                    <div class="data-value" th:text="${relatorio.estimativaDanoEdificacao != null ? 'R$ ' + #numbers.formatDecimal(relatorio.estimativaDanoEdificacao, 2, 2) : '-'}">R$ 0,00</div>
+                </div>
+                <div class="col-md-4">
                     <div class="data-label">Ocupação</div>
                     <div class="data-value" th:text="${relatorio.ocupacao}">Residencial</div>
                 </div>
