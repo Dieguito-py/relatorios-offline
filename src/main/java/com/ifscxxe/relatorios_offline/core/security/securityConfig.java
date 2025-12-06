@@ -53,9 +53,8 @@ public class securityConfig {
                                 "/assets/**",
                                 "/login", "/error"
                         ).permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/superadmin/**").hasRole("SUPERADMIN")
-                        .anyRequest().authenticated()
+                        .anyRequest().hasAnyRole("ADMIN", "SUPERADMIN")
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
