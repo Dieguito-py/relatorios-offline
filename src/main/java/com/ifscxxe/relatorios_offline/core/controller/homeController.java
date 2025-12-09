@@ -19,6 +19,9 @@ public class homeController {
 
     @GetMapping("/")
     public String home(Authentication authentication, Model model) {
+        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
+            System.out.println("Usuário logado via web: " + authentication.getName());
+        }
         if (authentication != null) {
             String username = authentication.getName();
             model.addAttribute("username", username);
