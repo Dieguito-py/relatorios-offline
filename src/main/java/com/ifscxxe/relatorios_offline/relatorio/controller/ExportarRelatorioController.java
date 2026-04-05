@@ -1,7 +1,7 @@
 package com.ifscxxe.relatorios_offline.relatorio.controller;
 
-import com.ifscxxe.relatorios_offline.relatorio.model.Relatorio;
-import com.ifscxxe.relatorios_offline.relatorio.repository.RelatorioRepository;
+import com.ifscxxe.relatorios_offline.relatorio.model.CadastroFamilia;
+import com.ifscxxe.relatorios_offline.relatorio.repository.CadastroFamiliaRepository;
 import com.ifscxxe.relatorios_offline.usuario.model.Usuario;
 import com.ifscxxe.relatorios_offline.usuario.repository.UsuarioRepository;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,7 +34,7 @@ public class ExportarRelatorioController {
     private UsuarioRepository usuarioRepository;
     
     @Autowired
-    private RelatorioRepository relatorioRepository;
+    private CadastroFamiliaRepository cadastroFamiliaRepository;
 
     @GetMapping("/exportar")
     public void exportar(
@@ -46,14 +46,14 @@ public class ExportarRelatorioController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
             @RequestParam(value = "format", required = false, defaultValue = "xlsx") String format
     ) throws IOException {
-        List<Relatorio> relatorios = Collections.emptyList();
-        
+        List<CadastroFamilia> relatorios = Collections.emptyList();
+
         if (authentication != null) {
             Usuario usuario = usuarioRepository.findByUsername(authentication.getName()).orElse(null);
-            if (usuario != null && usuario.getCoordenadoriaMunicipal() != null) {
-                Long coordenadoriaId = usuario.getCoordenadoriaMunicipal().getId();
+            if (usuario != null && usuario.getRegional() != null) {
+                Long regionalId = usuario.getRegional().getId();
                 if (inicio == null && fim == null) {
-                    relatorios = relatorioRepository.findByCoordenadoriaMunicipalIdOrderByIdDesc(coordenadoriaId);
+                    relatorios = cadastroFamiliaRepository.findByRegionalIdOrderByIdDesc(regionalId);
                 } else {
                     LocalDateTime inicioDateTime = inicio != null
                             ? inicio.atStartOfDay()
@@ -61,8 +61,8 @@ public class ExportarRelatorioController {
                     LocalDateTime fimDateTime = fim != null
                             ? fim.atTime(LocalTime.MAX)
                             : LocalDate.of(9999, Month.DECEMBER, 31).atTime(LocalTime.MAX);
-                    relatorios = relatorioRepository.findByCoordenadoriaMunicipalIdAndDataDesastreBetweenOrderByDataDesastreDesc(
-                            coordenadoriaId,
+                    relatorios = cadastroFamiliaRepository.findByRegionalIdAndDataDesastreBetweenOrderByDataDesastreDesc(
+                            regionalId,
                             inicioDateTime,
                             fimDateTime
                     );
@@ -79,7 +79,7 @@ public class ExportarRelatorioController {
         }
     }
 
-    private void gerarExcel(List<Relatorio> relatorios, HttpServletResponse response) throws IOException {
+    private void gerarExcel(List<CadastroFamilia> relatorios, HttpServletResponse response) throws IOException {
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("Relatórios");
 
@@ -117,7 +117,7 @@ public class ExportarRelatorioController {
             "Qtd Água Potável 5L", "Qtd Colchões Solteiro", "Qtd Colchões Casal", "Qtd Cestas Básicas",
             "Qtd Kit Higiene Pessoal", "Qtd Kit Limpeza", "Qtd Móveis", "Qtd Telhas 6mm", "Qtd Telhas 4mm",
             "Qtd Roupas", "Outras Necessidades", "Observação Assistência",
-            "Usuário", "Coordenadoria Municipal"
+            "Usuário", "Municipal", "Regional"
         };
 
         for (int i = 0; i < columns.length; i++) {
@@ -131,7 +131,7 @@ public class ExportarRelatorioController {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         
         int rowNum = 1;
-        for (Relatorio relatorio : relatorios) {
+        for (CadastroFamilia relatorio : relatorios) {
             Row row = sheet.createRow(rowNum++);
             int colNum = 0;
 
@@ -192,7 +192,8 @@ public class ExportarRelatorioController {
             
             // Relações
             createCell(row, colNum++, relatorio.getUsuario() != null ? relatorio.getUsuario().getNome() : "", dataStyle);
-            createCell(row, colNum++, relatorio.getCoordenadoriaMunicipal() != null ? relatorio.getCoordenadoriaMunicipal().getNome() : "", dataStyle);
+            createCell(row, colNum++, relatorio.getMunicipal() != null ? relatorio.getMunicipal().getNome() : "", dataStyle);
+            createCell(row, colNum++, relatorio.getRegional() != null ? relatorio.getRegional().getNome() : "", dataStyle);
         }
 
         // Auto-ajustar largura das colunas

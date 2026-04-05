@@ -119,9 +119,9 @@
             <strong>Permissões:</strong><br/>
             <span th:each="roleName : ${roleNames}" class="badge bg-light text-dark" th:text="${roleName}">ROLE</span>
         </div>
-        <p class="mt-3" th:if="${coordenadoriaMunicipal}">
-            <strong>Coordenadoria Municipal:</strong>
-            <span th:text="${coordenadoriaMunicipal}">Coordenadoria</span>
+        <p class="mt-3" th:if="${municipal}">
+            <strong>Municipal:</strong>
+            <span th:text="${municipal}">Municipal</span>
         </p>
         <p th:if="${regional}">
             <strong>Regional:</strong>

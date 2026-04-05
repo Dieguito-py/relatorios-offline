@@ -16,5 +16,5 @@ public class Regional {
     private String nome;
 
     @OneToMany(mappedBy = "regional", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CoordenadoriaMunicipal> coordenadorias;
+    private List<Municipal> municipais;
 }

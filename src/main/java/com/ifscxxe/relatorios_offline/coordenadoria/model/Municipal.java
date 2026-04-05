@@ -8,7 +8,8 @@ import java.util.List;
 
 @Data
 @Entity
-public class CoordenadoriaMunicipal {
+@Table(name = "coordenadoria_municipal")
+public class Municipal {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,6 +21,8 @@ public class CoordenadoriaMunicipal {
     @JoinColumn(name = "regional_id")
     private Regional regional;
 
-    @OneToMany(mappedBy = "coordenadoriaMunicipal", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "municipal", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Usuario> usuarios;
 }
+
+

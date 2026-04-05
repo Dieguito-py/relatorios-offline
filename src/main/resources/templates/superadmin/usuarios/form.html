@@ -36,15 +36,15 @@
                         <div class="text-danger" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Coordenadoria Municipal</label>
-                        <select th:field="*{coordenadoriaMunicipal.id}" class="form-select" required>
+                        <label class="form-label">Municipal</label>
+                        <select th:field="*{municipal.id}" class="form-select" required>
                             <option value="" disabled selected>Selecione</option>
-                            <option th:each="coord : ${coordenadorias}"
+                            <option th:each="coord : ${municipais}"
                                     th:value="${coord.id}"
                                     th:text="${coord.nome + ' - ' + (coord.regional != null ? coord.regional.nome : 'Sem regional')}">
                             </option>
                         </select>
-                        <div class="text-danger" th:if="${#fields.hasErrors('coordenadoriaMunicipal')}" th:errors="*{coordenadoriaMunicipal}"></div>
+                        <div class="text-danger" th:if="${#fields.hasErrors('municipal')}" th:errors="*{municipal}"></div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Permissões</label>

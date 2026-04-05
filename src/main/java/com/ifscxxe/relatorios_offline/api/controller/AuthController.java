@@ -1,5 +1,9 @@
 package com.ifscxxe.relatorios_offline.api.controller;
 
+import com.ifscxxe.relatorios_offline.api.dto.auth.request.LoginRequest;
+import com.ifscxxe.relatorios_offline.api.dto.auth.request.RegisterRequest;
+import com.ifscxxe.relatorios_offline.api.dto.auth.response.LoginResponse;
+import com.ifscxxe.relatorios_offline.api.dto.auth.response.RegisterResponse;
 import com.ifscxxe.relatorios_offline.core.providers.JWTprovider;
 import com.ifscxxe.relatorios_offline.usuario.model.Role;
 import com.ifscxxe.relatorios_offline.usuario.model.Usuario;
@@ -125,8 +129,4 @@ public class AuthController {
         ));
     }
 
-    public record LoginRequest(String username, String password) {}
-    public record LoginResponse(String token, String nome) {}
-    public record RegisterRequest(String username, String password, List<String> roles) {}
-    public record RegisterResponse(String username, List<String> roles) {}
 }

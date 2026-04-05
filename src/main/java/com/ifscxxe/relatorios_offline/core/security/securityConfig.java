@@ -35,7 +35,7 @@ public class securityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/api/relatorios/**").hasAnyRole("ADMIN", "USER")
+                        .requestMatchers("/api/relatorios/**", "/api/cadastros-familia/**").hasAnyRole("ADMIN", "USER")
 
                         .anyRequest().authenticated()
                 )
@@ -50,7 +50,7 @@ public class securityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/css/**", "/js/**", "/images/**", "/webjars/**",
-                                "/assets/**",
+                                "/assets/**", "/uploads/**",
                                 "/login", "/error"
                         ).permitAll()
                         .requestMatchers("/superadmin/**").hasRole("SUPERADMIN")

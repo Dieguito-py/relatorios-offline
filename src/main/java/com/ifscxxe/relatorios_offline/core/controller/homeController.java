@@ -28,15 +28,15 @@ public class homeController {
             Usuario usuario = usuarioRepository.findByUsername(username).orElse(null);
             model.addAttribute("nome", usuario != null ? usuario.getNome() : username);
             if (usuario != null) {
-                String coordenadoria = usuario.getCoordenadoriaMunicipal() != null
-                        ? usuario.getCoordenadoriaMunicipal().getNome()
+                String municipal = usuario.getMunicipal() != null
+                        ? usuario.getMunicipal().getNome()
                         : null;
                 String regional = usuario.getRegional() != null
                         ? usuario.getRegional().getNome()
-                        : (usuario.getCoordenadoriaMunicipal() != null && usuario.getCoordenadoriaMunicipal().getRegional() != null
-                        ? usuario.getCoordenadoriaMunicipal().getRegional().getNome()
+                        : (usuario.getMunicipal() != null && usuario.getMunicipal().getRegional() != null
+                        ? usuario.getMunicipal().getRegional().getNome()
                         : null);
-                model.addAttribute("coordenadoriaMunicipal", coordenadoria);
+                model.addAttribute("municipal", municipal);
                 model.addAttribute("regional", regional);
             }
             model.addAttribute("roles", authentication.getAuthorities());

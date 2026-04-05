@@ -42,7 +42,7 @@
                     <th>Usuário</th>
                     <th>Permissões</th>
                     <th>Regional</th>
-                    <th>Coordenadoria</th>
+                    <th>Municipal</th>
                     <th>Ações</th>
                 </tr>
                 </thead>
@@ -58,7 +58,7 @@
                               th:text="${role}">ROLE</span>
                     </td>
                     <td th:text="${usuario.regional != null ? usuario.regional.nome : '-'}">Regional</td>
-                    <td th:text="${usuario.coordenadoriaMunicipal != null ? usuario.coordenadoriaMunicipal.nome : '-'}">Coord</td>
+                    <td th:text="${usuario.municipal != null ? usuario.municipal.nome : '-'}">Municipal</td>
                     <td>
                         <a th:href="@{|/superadmin/usuarios/${usuario.id}/relatorios|}" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-eye"></i> Relatórios

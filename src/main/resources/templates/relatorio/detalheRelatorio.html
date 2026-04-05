@@ -36,6 +36,11 @@
             max-height: 400px;
             object-fit: cover;
         }
+        .foto-residencia-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 0.75rem;
+        }
     </style>
 </th:block>
 
@@ -277,9 +282,12 @@
                     </div>
                 </div>
             </div>
-            <div class="mt-3" th:if="${fotoResidenciaUrl}">
-                <div class="data-label">Foto residência</div>
-                <img th:src="${fotoResidenciaUrl}" alt="Foto da residência" class="img-fluid rounded foto-residencia">
+            <div class="mt-3" th:if="${fotoResidenciaUrls != null and !#lists.isEmpty(fotoResidenciaUrls)}">
+                <div class="data-label">Fotos residência</div>
+                <div class="foto-residencia-grid mt-2">
+                    <img th:each="fotoUrl : ${fotoResidenciaUrls}" th:src="${fotoUrl}" alt="Foto da residência"
+                         class="img-fluid rounded foto-residencia">
+                </div>
             </div>
         </div>
     </div>

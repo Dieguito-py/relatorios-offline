@@ -1,9 +1,9 @@
 package com.ifscxxe.relatorios_offline.usuario.controller;
 
-import com.ifscxxe.relatorios_offline.coordenadoria.model.CoordenadoriaMunicipal;
-import com.ifscxxe.relatorios_offline.coordenadoria.repository.CoordenadoriaMunicipalRepository;
-import com.ifscxxe.relatorios_offline.relatorio.model.Relatorio;
-import com.ifscxxe.relatorios_offline.relatorio.repository.RelatorioRepository;
+import com.ifscxxe.relatorios_offline.coordenadoria.model.Municipal;
+import com.ifscxxe.relatorios_offline.coordenadoria.repository.MunicipalRepository;
+import com.ifscxxe.relatorios_offline.relatorio.model.CadastroFamilia;
+import com.ifscxxe.relatorios_offline.relatorio.repository.CadastroFamiliaRepository;
 import com.ifscxxe.relatorios_offline.usuario.model.Role;
 import com.ifscxxe.relatorios_offline.usuario.model.Usuario;
 import com.ifscxxe.relatorios_offline.usuario.repository.UsuarioRepository;
@@ -29,17 +29,17 @@ import java.util.List;
 public class SuperAdminUsuarioController {
 
     private final UsuarioRepository usuarioRepository;
-    private final RelatorioRepository relatorioRepository;
-    private final CoordenadoriaMunicipalRepository coordenadoriaMunicipalRepository;
+    private final CadastroFamiliaRepository cadastroFamiliaRepository;
+    private final MunicipalRepository municipalRepository;
     private final PasswordEncoder passwordEncoder;
 
     public SuperAdminUsuarioController(UsuarioRepository usuarioRepository,
-                                       RelatorioRepository relatorioRepository,
-                                       CoordenadoriaMunicipalRepository coordenadoriaMunicipalRepository,
+                                       CadastroFamiliaRepository cadastroFamiliaRepository,
+                                       MunicipalRepository municipalRepository,
                                        PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
-        this.relatorioRepository = relatorioRepository;
-        this.coordenadoriaMunicipalRepository = coordenadoriaMunicipalRepository;
+        this.cadastroFamiliaRepository = cadastroFamiliaRepository;
+        this.municipalRepository = municipalRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -49,7 +49,7 @@ public class SuperAdminUsuarioController {
         usuarios.sort(Comparator
                 .comparing((Usuario u) -> u.getRegional() != null ? u.getRegional().getNome() : null,
                         Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
-                .thenComparing(u -> u.getCoordenadoriaMunicipal() != null ? u.getCoordenadoriaMunicipal().getNome() : null,
+                .thenComparing(u -> u.getMunicipal() != null ? u.getMunicipal().getNome() : null,
                         Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
                 .thenComparing(u -> u.getNome() != null ? u.getNome() : u.getUsername(),
                         Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
@@ -76,8 +76,8 @@ public class SuperAdminUsuarioController {
             bindingResult.rejectValue("username", "username.exists", "Nome de usuário já utilizado.");
         }
 
-        if (usuario.getCoordenadoriaMunicipal() == null || usuario.getCoordenadoriaMunicipal().getId() == null) {
-            bindingResult.rejectValue("coordenadoriaMunicipal", "coordenadoria.required", "Selecione uma coordenadoria.");
+        if (usuario.getMunicipal() == null || usuario.getMunicipal().getId() == null) {
+            bindingResult.rejectValue("municipal", "municipal.required", "Selecione um municipal.");
         }
 
         if (usuario.getRoles() == null || usuario.getRoles().isEmpty()) {
@@ -90,13 +90,13 @@ public class SuperAdminUsuarioController {
             return "superadmin/usuarios/form";
         }
 
-        CoordenadoriaMunicipal coordenadoria = coordenadoriaMunicipalRepository.findById(usuario.getCoordenadoriaMunicipal().getId())
-                .orElseThrow(() -> new IllegalArgumentException("Coordenadoria não encontrada"));
+        Municipal municipal = municipalRepository.findById(usuario.getMunicipal().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Municipal não encontrado"));
 
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
         usuario.setRoles(EnumSet.copyOf(usuario.getRoles()));
-        usuario.setCoordenadoriaMunicipal(coordenadoria);
-        usuario.setRegional(coordenadoria.getRegional());
+        usuario.setMunicipal(municipal);
+        usuario.setRegional(municipal.getRegional());
 
         usuarioRepository.save(usuario);
         return "redirect:/superadmin/usuarios?created";
@@ -106,7 +106,7 @@ public class SuperAdminUsuarioController {
     public String relatoriosPorUsuario(@PathVariable Long id, Model model) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
-        List<Relatorio> relatorios = relatorioRepository.findByUsuarioIdOrderByDataDesastreDesc(id);
+        List<CadastroFamilia> relatorios = cadastroFamiliaRepository.findByUsuarioIdOrderByDataDesastreDesc(id);
         model.addAttribute("usuario", usuario);
         model.addAttribute("relatorios", relatorios);
         model.addAttribute("pageTitle", "Relatórios de " + usuario.getNome());
@@ -114,7 +114,7 @@ public class SuperAdminUsuarioController {
     }
 
     private void preencherListas(Model model) {
-        model.addAttribute("coordenadorias", coordenadoriaMunicipalRepository.findAll());
+        model.addAttribute("municipais", municipalRepository.findAll());
         model.addAttribute("rolesDisponiveis", Role.values());
     }
 }

@@ -1,8 +1,8 @@
 package com.ifscxxe.relatorios_offline.usuario.model;
 
-import com.ifscxxe.relatorios_offline.coordenadoria.model.CoordenadoriaMunicipal;
+import com.ifscxxe.relatorios_offline.coordenadoria.model.Municipal;
 import com.ifscxxe.relatorios_offline.coordenadoria.model.Regional;
-import com.ifscxxe.relatorios_offline.relatorio.model.Relatorio;
+import com.ifscxxe.relatorios_offline.relatorio.model.CadastroFamilia;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -38,11 +38,11 @@ public class Usuario {
 
     @ManyToOne
     @JoinColumn(name = "coordenadoria_municipal_id")
-    private CoordenadoriaMunicipal coordenadoriaMunicipal;
+    private Municipal municipal;
     @ManyToOne
     @JoinColumn(name = "regional_id")
     private Regional regional;
 
     @OneToMany(mappedBy = "usuario")
-    private List<Relatorio> relatorios;
+    private List<CadastroFamilia> cadastrosFamilia;
 }

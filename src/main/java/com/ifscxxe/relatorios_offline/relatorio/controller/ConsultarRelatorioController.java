@@ -1,7 +1,7 @@
 package com.ifscxxe.relatorios_offline.relatorio.controller;
 
-import com.ifscxxe.relatorios_offline.relatorio.model.Relatorio;
-import com.ifscxxe.relatorios_offline.relatorio.repository.RelatorioRepository;
+import com.ifscxxe.relatorios_offline.relatorio.model.CadastroFamilia;
+import com.ifscxxe.relatorios_offline.relatorio.repository.CadastroFamiliaRepository;
 import com.ifscxxe.relatorios_offline.usuario.model.Usuario;
 import com.ifscxxe.relatorios_offline.usuario.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ public class ConsultarRelatorioController {
     @Autowired
     private UsuarioRepository usuarioRepository;
     @Autowired
-    private RelatorioRepository relatorioRepository;
+    private CadastroFamiliaRepository cadastroFamiliaRepository;
 
     @GetMapping("/consultarRelatorios")
     public String consultar(
@@ -41,13 +41,13 @@ public class ConsultarRelatorioController {
             @RequestParam(value = "fim", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim
     ) {
-        List<Relatorio> relatorios = Collections.emptyList();
+        List<CadastroFamilia> relatorios = Collections.emptyList();
         if (authentication != null) {
             Usuario usuario = usuarioRepository.findByUsername(authentication.getName()).orElse(null);
-            if (usuario != null && usuario.getCoordenadoriaMunicipal() != null) {
-                Long coordenadoriaId = usuario.getCoordenadoriaMunicipal().getId();
+            if (usuario != null && usuario.getRegional() != null) {
+                Long regionalId = usuario.getRegional().getId();
                 if (inicio == null && fim == null) {
-                    relatorios = relatorioRepository.findByCoordenadoriaMunicipalIdOrderByIdDesc(coordenadoriaId);
+                    relatorios = cadastroFamiliaRepository.findByRegionalIdOrderByIdDesc(regionalId);
                 } else {
                     LocalDateTime inicioDateTime = inicio != null
                             ? inicio.atStartOfDay()
@@ -55,8 +55,8 @@ public class ConsultarRelatorioController {
                     LocalDateTime fimDateTime = fim != null
                             ? fim.atTime(LocalTime.MAX)
                             : LocalDate.of(9999, Month.DECEMBER, 31).atTime(LocalTime.MAX);
-                    relatorios = relatorioRepository.findByCoordenadoriaMunicipalIdAndDataDesastreBetweenOrderByDataDesastreDesc(
-                            coordenadoriaId,
+                    relatorios = cadastroFamiliaRepository.findByRegionalIdAndDataDesastreBetweenOrderByDataDesastreDesc(
+                            regionalId,
                             inicioDateTime,
                             fimDateTime
                     );
@@ -75,26 +75,26 @@ public class ConsultarRelatorioController {
             return "redirect:/login";
         }
         Optional<Usuario> usuarioOpt = usuarioRepository.findByUsername(authentication.getName());
-        if (usuarioOpt.isEmpty() || usuarioOpt.get().getCoordenadoriaMunicipal() == null) {
-            model.addAttribute("error", "Usuário sem coordenadoria associada.");
+        if (usuarioOpt.isEmpty() || usuarioOpt.get().getRegional() == null) {
+            model.addAttribute("error", "Usuário sem regional associada.");
             return "redirect:/relatorios/consultarRelatorios";
         }
-        Long coordenadoriaId = usuarioOpt.get().getCoordenadoriaMunicipal().getId();
-        Optional<Relatorio> relatorioOpt = relatorioRepository.findByIdAndCoordenadoriaMunicipalId(id, coordenadoriaId);
+        Long regionalId = usuarioOpt.get().getRegional().getId();
+        Optional<CadastroFamilia> relatorioOpt = cadastroFamiliaRepository.findByIdAndRegionalId(id, regionalId);
         if (relatorioOpt.isEmpty()) {
             model.addAttribute("error", "Relatório não encontrado ou indisponível.");
             return "redirect:/relatorios/consultarRelatorios";
         }
-        Relatorio relatorio = relatorioOpt.get();
+        CadastroFamilia relatorio = relatorioOpt.get();
         model.addAttribute("relatorio", relatorio);
 
-        String fotoResidenciaUrl = null;
-        if (StringUtils.hasText(relatorio.getFotoResidencia())) {
-            fotoResidenciaUrl = relatorio.getFotoResidencia().startsWith("http")
-                    ? relatorio.getFotoResidencia()
-                    : "data:image/jpeg;base64," + relatorio.getFotoResidencia();
-        }
-        model.addAttribute("fotoResidenciaUrl", fotoResidenciaUrl);
+        List<String> fotoResidenciaUrls = relatorio.getFotosResidencia() == null
+                ? Collections.emptyList()
+                : relatorio.getFotosResidencia().stream()
+                .map(foto -> normalizarFotoResidenciaUrl(foto.getCaminho()))
+                .filter(StringUtils::hasText)
+                .toList();
+        model.addAttribute("fotoResidenciaUrls", fotoResidenciaUrls);
 
         if (StringUtils.hasText(relatorio.getLatitude()) && StringUtils.hasText(relatorio.getLongitude())) {
             model.addAttribute("googleMapsUrl",
@@ -103,5 +103,19 @@ public class ConsultarRelatorioController {
 
         model.addAttribute("pageTitle", "Detalhes do Relatório");
         return "relatorio/detalheRelatorio";
+    }
+
+
+    private String normalizarFotoResidenciaUrl(String fotoResidencia) {
+        if (!StringUtils.hasText(fotoResidencia)) {
+            return null;
+        }
+        if (fotoResidencia.startsWith("http") || fotoResidencia.startsWith("/")) {
+            return fotoResidencia;
+        }
+        if (fotoResidencia.startsWith("uploads/")) {
+            return "/" + fotoResidencia;
+        }
+        return "data:image/jpeg;base64," + fotoResidencia;
     }
 }

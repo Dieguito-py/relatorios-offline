@@ -1,34 +1,47 @@
 package com.ifscxxe.relatorios_offline.api.controller;
 
-import com.ifscxxe.relatorios_offline.coordenadoria.model.CoordenadoriaMunicipal;
-import com.ifscxxe.relatorios_offline.relatorio.model.Relatorio;
-import com.ifscxxe.relatorios_offline.relatorio.repository.RelatorioRepository;
+import com.ifscxxe.relatorios_offline.api.dto.relatorio.request.RelatorioRequest;
+import com.ifscxxe.relatorios_offline.api.dto.relatorio.response.RelatorioResponse;
+import com.ifscxxe.relatorios_offline.coordenadoria.model.Municipal;
+import com.ifscxxe.relatorios_offline.coordenadoria.repository.MunicipalRepository;
+import com.ifscxxe.relatorios_offline.core.storage.FileStorageService;
+import com.ifscxxe.relatorios_offline.core.storage.StoredFileMetadata;
+import com.ifscxxe.relatorios_offline.relatorio.model.CadastroFamilia;
+import com.ifscxxe.relatorios_offline.relatorio.repository.CadastroFamiliaRepository;
 import com.ifscxxe.relatorios_offline.usuario.model.Usuario;
 import com.ifscxxe.relatorios_offline.usuario.repository.UsuarioRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/relatorios")
+@RequestMapping({"/api/relatorios", "/api/cadastros-familia"})
 public class RelatorioController {
 
-    private final RelatorioRepository relatorioRepository;
+    private final CadastroFamiliaRepository cadastroFamiliaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final MunicipalRepository municipalRepository;
+    private final FileStorageService fileStorageService;
 
-    public RelatorioController(RelatorioRepository relatorioRepository,
-                               UsuarioRepository usuarioRepository) {
-        this.relatorioRepository = relatorioRepository;
+    public RelatorioController(CadastroFamiliaRepository cadastroFamiliaRepository,
+                               UsuarioRepository usuarioRepository,
+                               MunicipalRepository municipalRepository,
+                               FileStorageService fileStorageService) {
+        this.cadastroFamiliaRepository = cadastroFamiliaRepository;
         this.usuarioRepository = usuarioRepository;
+        this.municipalRepository = municipalRepository;
+        this.fileStorageService = fileStorageService;
     }
 
-    @PostMapping(path = "/criar")
-    public ResponseEntity<?> criarRelatorio(@RequestBody RelatorioRequest request) {
+    @PostMapping(path = "/criar", consumes = "multipart/form-data")
+    public ResponseEntity<?> criarRelatorio(@ModelAttribute RelatorioRequest request) {
         if (request == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", "Dados do relatório são obrigatórios"));
@@ -45,7 +58,7 @@ public class RelatorioController {
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + username));
 
         try {
-            Relatorio relatorio = new Relatorio();
+            CadastroFamilia relatorio = new CadastroFamilia();
 
             relatorio.setNomeAtingido(request.nomeAtingido());
             relatorio.setCpfAtingido(request.cpfAtingido());
@@ -96,18 +109,42 @@ public class RelatorioController {
 
             relatorio.setLatitude(request.latitude());
             relatorio.setLongitude(request.longitude());
-            relatorio.setFotoResidencia(request.fotoResidencia());
 
             relatorio.setUsuario(usuario);
-            relatorio.setCoordenadoriaMunicipal(usuario.getCoordenadoriaMunicipal());
 
-            if (request.coordenadoriaMunicipalId() != null) {
-                CoordenadoriaMunicipal coordenadoria = new CoordenadoriaMunicipal();
-                coordenadoria.setId(request.coordenadoriaMunicipalId());
-                relatorio.setCoordenadoriaMunicipal(coordenadoria);
+            Municipal municipal = usuario.getMunicipal();
+            if (request.municipalId() != null) {
+                municipal = municipalRepository.findById(request.municipalId())
+                        .orElseThrow(() -> new IllegalArgumentException("Municipal não encontrado"));
             }
 
-            Relatorio savedRelatorio = relatorioRepository.save(relatorio);
+            relatorio.setMunicipal(municipal);
+            relatorio.setRegional(municipal != null && municipal.getRegional() != null
+                    ? municipal.getRegional()
+                    : usuario.getRegional());
+
+            List<MultipartFile> fotosParaSalvar = new ArrayList<>();
+            if (request.fotosResidencia() != null) {
+                request.fotosResidencia().stream()
+                        .filter(file -> file != null && !file.isEmpty())
+                        .forEach(fotosParaSalvar::add);
+            }
+
+            if (!fotosParaSalvar.isEmpty()) {
+                if (relatorio.getRegional() == null || relatorio.getRegional().getId() == null) {
+                    throw new IllegalArgumentException("Regional não encontrada para salvar a foto da residência");
+                }
+
+                for (MultipartFile foto : fotosParaSalvar) {
+                    StoredFileMetadata fotoSalva = fileStorageService.storeRegionalPhoto(
+                            foto,
+                            relatorio.getRegional().getId()
+                    );
+                    relatorio.addFotoResidencia(fotoSalva);
+                }
+            }
+
+            CadastroFamilia savedRelatorio = cadastroFamiliaRepository.save(relatorio);
 
             RelatorioResponse response = new RelatorioResponse(
                     savedRelatorio.getId(),
@@ -127,60 +164,5 @@ public class RelatorioController {
         }
     }
 
-    public record RelatorioRequest(
-            String nomeAtingido,
-            String cpfAtingido,
-            String rgAtingido,
-            LocalDateTime dataNascimentoAtingido,
-            String enderecoAtingido,
-            String bairroAtingido,
-            String cidadeAtingido,
-            String complementoAtingido,
-            String localizacao,
-            String moradia,
-            String danoResidencia,
-            Double estimativaDanoMoveis,
-            Double estimativaDanoEdificacao,
-            String ocupacao,
-            String tipoConstrucao,
-            String alternativaMoradia,
-            String observacaoImovel,
-            Integer numeroTotalPessoas,
-            Integer menores0a12,
-            Integer menores13a17,
-            Integer maiores18a59,
-            Integer idosos60mais,
-            Boolean possuiNecessidadesEspeciais,
-            Integer quantidadeNecessidadesEspeciais,
-            String observacaoNecessidades,
-            Boolean usoMedicamentoContinuo,
-            String medicamento,
-            Boolean possuiDesaparecidos,
-            Integer quantidadeDesaparecidos,
-            Integer quantidadeFeridos,
-            Integer quantidadeObitos,
-            Integer qtdAguaPotavel5L,
-            Integer qtdColchoesSolteiro,
-            Integer qtdColchoesCasal,
-            Integer qtdCestasBasicas,
-            Integer qtdKitHigienePessoal,
-            Integer qtdKitLimpeza,
-            Integer qtdMoveis,
-            Integer qtdTelhas6mm,
-            Integer qtdTelhas4mm,
-            Integer qtdRoupas,
-            String outrasNecessidades,
-            String observacaoAssistencia,
-            Long coordenadoriaMunicipalId,
-            String latitude,
-            String longitude,
-            String fotoResidencia
-    ) {}
 
-    public record RelatorioResponse(
-            Long id,
-            LocalDateTime dataDesastre,
-            String nomeAtingido,
-            String cidadeAtingido
-    ) {}
 }

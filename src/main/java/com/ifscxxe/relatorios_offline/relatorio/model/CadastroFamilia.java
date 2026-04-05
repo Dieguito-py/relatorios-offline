@@ -1,15 +1,22 @@
 package com.ifscxxe.relatorios_offline.relatorio.model;
 
-import com.ifscxxe.relatorios_offline.coordenadoria.model.CoordenadoriaMunicipal;
+import com.ifscxxe.relatorios_offline.coordenadoria.model.Municipal;
+import com.ifscxxe.relatorios_offline.coordenadoria.model.Regional;
+import com.ifscxxe.relatorios_offline.core.storage.StoredFileMetadata;
 import com.ifscxxe.relatorios_offline.usuario.model.Usuario;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
-public class Relatorio {
+@Table(name = "relatorio")
+public class CadastroFamilia {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -67,8 +74,10 @@ public class Relatorio {
     private String latitude;
     private String longitude;
 
-    @Column(name = "foto_residencia", columnDefinition = "TEXT")
-    private String fotoResidencia;
+    @OneToMany(mappedBy = "relatorio", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<RelatorioFoto> fotosResidencia = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "usuario_id")
@@ -76,10 +85,28 @@ public class Relatorio {
 
     @ManyToOne
     @JoinColumn(name = "coordenadoria_municipal_id")
-    private CoordenadoriaMunicipal coordenadoriaMunicipal;
+    private Municipal municipal;
+
+    @ManyToOne
+    @JoinColumn(name = "regional_id")
+    private Regional regional;
 
     @PrePersist
     protected void onCreate() {
         this.dataDesastre = LocalDateTime.now();
     }
+
+    public void addFotoResidencia(StoredFileMetadata arquivo) {
+        RelatorioFoto foto = new RelatorioFoto();
+        foto.setNomeOriginal(arquivo.nomeOriginal());
+        foto.setNomeGerado(arquivo.nomeGerado());
+        foto.setCaminho(arquivo.caminho());
+        foto.setContentType(arquivo.contentType());
+        foto.setTamanho(arquivo.tamanho());
+        foto.setRelatorio(this);
+        fotosResidencia.add(foto);
+    }
 }
+
+
+
