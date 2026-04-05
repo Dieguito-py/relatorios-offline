@@ -3,7 +3,8 @@ package com.ifscxxe.relatorios_offline.usuario.model;
 public enum Role {
     AGENTECAMPO("Agente de Campo"),
     MUNICIPAL("Municipal"),
-    REGIONAL("Regional");
+    REGIONAL("Regional"),
+    MASTER("Master");
 
     private final String descricao;
 
@@ -21,6 +22,7 @@ public enum Role {
             case "USER", "AGENTECAMPO" -> AGENTECAMPO;
             case "ADMIN", "MUNICIPAL" -> MUNICIPAL;
             case "SUPERADMIN", "REGIONAL" -> REGIONAL;
+            case "MASTER" -> MASTER;
             default -> null;
         };
     }

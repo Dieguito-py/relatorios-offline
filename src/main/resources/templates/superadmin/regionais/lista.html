@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::content}, ~{::custom-styles}, ~{::custom-scripts})}">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerenciar Regionais</title>
+</head>
+<body>
+<th:block th:fragment="custom-styles"></th:block>
+
+<th:block th:fragment="content">
+    <div th:if="${param.created}" class="alert alert-success" role="alert">
+        Regional criada com sucesso.
+    </div>
+    <div th:if="${param.invalidName}" class="alert alert-danger" role="alert">
+        Informe um nome válido para a regional.
+    </div>
+    <div th:if="${param.municipalCreated}" class="alert alert-success" role="alert">
+        Municipal criada com sucesso.
+    </div>
+    <div th:if="${param.invalidMunicipalName}" class="alert alert-danger" role="alert">
+        Informe um nome válido para o municipal.
+    </div>
+    <div th:if="${param.invalidRegional}" class="alert alert-danger" role="alert">
+        Selecione uma regional válida para o municipal.
+    </div>
+    <div th:if="${param.updated}" class="alert alert-success" role="alert">
+        Regional atualizada com sucesso.
+    </div>
+    <div th:if="${param.municipalUpdated}" class="alert alert-success" role="alert">
+        Municipal atualizada com sucesso.
+    </div>
+    <div th:if="${param.invalidMunicipal}" class="alert alert-danger" role="alert">
+        Municipal não encontrada.
+    </div>
+    <div th:if="${param.municipalDeleted}" class="alert alert-success" role="alert">
+        Municipal excluída com sucesso.
+    </div>
+    <div th:if="${param.municipalHasLinks}" class="alert alert-danger" role="alert">
+        Não foi possível excluir a municipal porque ela possui usuários ou relatórios vinculados.
+    </div>
+    <div th:if="${param.regionalDeleted}" class="alert alert-success" role="alert">
+        Regional excluída com sucesso.
+    </div>
+    <div th:if="${param.regionalHasLinks}" class="alert alert-danger" role="alert">
+        Não foi possível excluir a regional porque ela possui municípios, usuários ou relatórios vinculados.
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Regionais</h1>
+            <p class="text-muted mb-0">Crie regionais e vincule os municípios.</p>
+        </div>
+        <a href="/" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Nova regional</h2>
+                    <form th:action="@{/master/regionais}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label" for="nome">Nome da regional</label>
+                            <input id="nome" name="nome" class="form-control" required maxlength="100">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Salvar regional</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Novo municipal</h2>
+                    <form th:action="@{/master/regionais/municipais}" method="post" class="row g-2 mb-4">
+                        <div class="col-md-5">
+                            <label class="form-label" for="municipalNome">Nome do municipal</label>
+                            <input id="municipalNome" name="nome" class="form-control" required maxlength="100">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label" for="regionalId">Regional</label>
+                            <select id="regionalId" name="regionalId" class="form-select" required>
+                                <option value="" selected disabled>Selecione</option>
+                                <option th:each="regional : ${regionais}" th:value="${regional.id}" th:text="${regional.nome}">Regional</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-grid align-self-end">
+                            <button type="submit" class="btn btn-outline-primary">Criar</button>
+                        </div>
+                    </form>
+
+                    <h2 class="h5 mb-3">Regionais cadastradas</h2>
+                    <form method="get" action="/master/regionais" class="row g-2 mb-3">
+                        <div class="col-md-8">
+                            <input class="form-control" type="search" name="qRegional" th:value="${qRegional}" placeholder="Pesquisar regional por nome">
+                        </div>
+                        <div class="col-md-4 d-grid">
+                            <button class="btn btn-outline-secondary" type="submit">Pesquisar</button>
+                        </div>
+                    </form>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                            <tr>
+                                <th>Regional</th>
+                                <th>Municípios</th>
+                                <th>Ações</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:if="${#lists.isEmpty(regionaisPage.content)}">
+                                <td colspan="3" class="text-center text-muted py-4">Nenhuma regional cadastrada.</td>
+                            </tr>
+                            <tr th:each="regional : ${regionaisPage.content}">
+                                <td th:text="${regional.nome}">Regional</td>
+                                <td>
+                                    <span th:if="${#lists.isEmpty(regional.municipais)}" class="text-muted">Sem municípios vinculados</span>
+                                    <span th:each="municipal : ${regional.municipais}" class="badge text-bg-primary me-1 mb-1"
+                                          th:text="${municipal.nome}">Municipal</span>
+                                </td>
+                                <td>
+                                    <a th:href="@{|/master/regionais/${regional.id}/editar|}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </a>
+                                    <form th:action="@{|/master/regionais/${regional.id}/excluir|}" method="post" class="d-inline"
+                                          onsubmit="return confirm('Confirma a exclusão desta regional?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i> Excluir
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav th:if="${regionaisPage.totalPages > 1}" aria-label="Paginação regionais" class="mt-2">
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item" th:classappend="${regionaisPage.first} ? 'disabled'">
+                                <a class="page-link"
+                                   th:href="@{/master/regionais(qRegional=${qRegional},qMunicipal=${qMunicipal},municipalRegionalId=${municipalRegionalId},regionalPage=${regionaisPage.number - 1},municipalPage=${municipaisPage.number})}">Anterior</a>
+                            </li>
+                            <li class="page-item disabled">
+                                <span class="page-link" th:text="${(regionaisPage.number + 1) + ' / ' + regionaisPage.totalPages}">1 / 1</span>
+                            </li>
+                            <li class="page-item" th:classappend="${regionaisPage.last} ? 'disabled'">
+                                <a class="page-link"
+                                   th:href="@{/master/regionais(qRegional=${qRegional},qMunicipal=${qMunicipal},municipalRegionalId=${municipalRegionalId},regionalPage=${regionaisPage.number + 1},municipalPage=${municipaisPage.number})}">Próxima</a>
+                            </li>
+                        </ul>
+                    </nav>
+
+                    <h2 class="h5 mt-4 mb-3">Municipais cadastrados</h2>
+                    <form method="get" action="/master/regionais" class="row g-2 mb-3">
+                        <div class="col-md-4">
+                            <input class="form-control" type="search" name="qMunicipal" th:value="${qMunicipal}" placeholder="Pesquisar municipal">
+                        </div>
+                        <div class="col-md-5">
+                            <select name="municipalRegionalId" class="form-select">
+                                <option value="">Todas as regionais</option>
+                                <option th:each="regional : ${regionais}"
+                                        th:value="${regional.id}"
+                                        th:selected="${municipalRegionalId != null and municipalRegionalId == regional.id}"
+                                        th:text="${regional.nome}">Regional</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-grid">
+                            <button class="btn btn-outline-secondary" type="submit">Filtrar</button>
+                        </div>
+                        <input type="hidden" name="qRegional" th:value="${qRegional}">
+                        <input type="hidden" name="regionalPage" th:value="${regionaisPage.number}">
+                    </form>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                            <tr>
+                                <th>Municipal</th>
+                                <th>Regional</th>
+                                <th>Ações</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:if="${#lists.isEmpty(municipaisPage.content)}">
+                                <td colspan="3" class="text-center text-muted py-4">Nenhum municipal cadastrado.</td>
+                            </tr>
+                            <tr th:each="municipal : ${municipaisPage.content}">
+                                <td th:text="${municipal.nome}">Municipal</td>
+                                <td th:text="${municipal.regional != null ? municipal.regional.nome : '-'}">Regional</td>
+                                <td>
+                                    <a th:href="@{|/master/regionais/municipais/${municipal.id}/editar|}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </a>
+                                    <form th:action="@{|/master/regionais/municipais/${municipal.id}/excluir|}" method="post" class="d-inline"
+                                          onsubmit="return confirm('Confirma a exclusão desta municipal?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i> Excluir
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav th:if="${municipaisPage.totalPages > 1}" aria-label="Paginação municipais" class="mt-2">
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item" th:classappend="${municipaisPage.first} ? 'disabled'">
+                                <a class="page-link"
+                                   th:href="@{/master/regionais(qRegional=${qRegional},qMunicipal=${qMunicipal},municipalRegionalId=${municipalRegionalId},regionalPage=${regionaisPage.number},municipalPage=${municipaisPage.number - 1})}">Anterior</a>
+                            </li>
+                            <li class="page-item disabled">
+                                <span class="page-link" th:text="${(municipaisPage.number + 1) + ' / ' + municipaisPage.totalPages}">1 / 1</span>
+                            </li>
+                            <li class="page-item" th:classappend="${municipaisPage.last} ? 'disabled'">
+                                <a class="page-link"
+                                   th:href="@{/master/regionais(qRegional=${qRegional},qMunicipal=${qMunicipal},municipalRegionalId=${municipalRegionalId},regionalPage=${regionaisPage.number},municipalPage=${municipaisPage.number + 1})}">Próxima</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="custom-scripts"></th:block>
+</body>
+</html>
+
+

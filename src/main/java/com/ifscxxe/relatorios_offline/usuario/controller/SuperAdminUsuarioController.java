@@ -9,6 +9,7 @@ import com.ifscxxe.relatorios_offline.usuario.model.Usuario;
 import com.ifscxxe.relatorios_offline.usuario.repository.UsuarioRepository;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -25,7 +26,7 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/superadmin/usuarios")
-@PreAuthorize("hasRole('REGIONAL')")
+@PreAuthorize("hasAnyRole('REGIONAL','MASTER')")
 public class SuperAdminUsuarioController {
 
     private final UsuarioRepository usuarioRepository;
@@ -44,8 +45,13 @@ public class SuperAdminUsuarioController {
     }
 
     @GetMapping
-    public String listarUsuarios(Model model) {
-        List<Usuario> usuarios = usuarioRepository.findAll();
+    public String listarUsuarios(Authentication authentication, Model model) {
+        Usuario usuarioLogado = obterUsuarioLogado(authentication);
+        boolean isMaster = hasRole(authentication, "ROLE_MASTER");
+
+        List<Usuario> usuarios = isMaster
+                ? usuarioRepository.findAll()
+                : usuarioRepository.findByRegionalId(usuarioLogado.getRegional() != null ? usuarioLogado.getRegional().getId() : -1L);
         usuarios.sort(Comparator
                 .comparing((Usuario u) -> u.getRegional() != null ? u.getRegional().getNome() : null,
                         Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
@@ -60,10 +66,10 @@ public class SuperAdminUsuarioController {
     }
 
     @GetMapping("/novo")
-    public String novoUsuario(Model model) {
+    public String novoUsuario(Authentication authentication, Model model) {
         Usuario usuario = new Usuario();
         model.addAttribute("usuario", usuario);
-        preencherListas(model);
+        preencherListas(model, authentication);
         model.addAttribute("pageTitle", "Novo Usuário");
         return "superadmin/usuarios/form";
     }
@@ -71,7 +77,11 @@ public class SuperAdminUsuarioController {
     @PostMapping
     public String salvarUsuario(@Valid @ModelAttribute("usuario") Usuario usuario,
                                 BindingResult bindingResult,
+                                Authentication authentication,
                                 Model model) {
+        Usuario usuarioLogado = obterUsuarioLogado(authentication);
+        boolean isMaster = hasRole(authentication, "ROLE_MASTER");
+
         if (usuarioRepository.existsByUsername(usuario.getUsername())) {
             bindingResult.rejectValue("username", "username.exists", "Nome de usuário já utilizado.");
         }
@@ -84,14 +94,30 @@ public class SuperAdminUsuarioController {
             bindingResult.rejectValue("roles", "roles.required", "Selecione ao menos uma permissão.");
         }
 
+        List<Role> rolesPermitidas = rolesPermitidasParaPerfil(isMaster);
+        if (usuario.getRoles() != null && usuario.getRoles().stream().anyMatch(role -> !rolesPermitidas.contains(role))) {
+            bindingResult.rejectValue("roles", "roles.invalid", "Você não pode atribuir uma ou mais permissões selecionadas.");
+        }
+
         if (bindingResult.hasErrors()) {
-            preencherListas(model);
+            preencherListas(model, authentication);
             model.addAttribute("pageTitle", "Novo Usuário");
             return "superadmin/usuarios/form";
         }
 
         Municipal municipal = municipalRepository.findById(usuario.getMunicipal().getId())
                 .orElseThrow(() -> new IllegalArgumentException("Municipal não encontrado"));
+
+        if (!isMaster) {
+            Long regionalDoLogado = usuarioLogado.getRegional() != null ? usuarioLogado.getRegional().getId() : null;
+            Long regionalDoMunicipal = municipal.getRegional() != null ? municipal.getRegional().getId() : null;
+            if (regionalDoLogado == null || !regionalDoLogado.equals(regionalDoMunicipal)) {
+                bindingResult.rejectValue("municipal", "municipal.invalid", "Você só pode selecionar município da sua regional.");
+                preencherListas(model, authentication);
+                model.addAttribute("pageTitle", "Novo Usuário");
+                return "superadmin/usuarios/form";
+            }
+        }
 
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
         usuario.setRoles(EnumSet.copyOf(usuario.getRoles()));
@@ -103,9 +129,20 @@ public class SuperAdminUsuarioController {
     }
 
     @GetMapping("/{id}/relatorios")
-    public String relatoriosPorUsuario(@PathVariable Long id, Model model) {
+    public String relatoriosPorUsuario(@PathVariable Long id, Authentication authentication, Model model) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+        Usuario usuarioLogado = obterUsuarioLogado(authentication);
+        boolean isMaster = hasRole(authentication, "ROLE_MASTER");
+
+        if (!isMaster) {
+            Long regionalDoLogado = usuarioLogado.getRegional() != null ? usuarioLogado.getRegional().getId() : null;
+            Long regionalDoAlvo = usuario.getRegional() != null ? usuario.getRegional().getId() : null;
+            if (regionalDoLogado == null || !regionalDoLogado.equals(regionalDoAlvo)) {
+                return "redirect:/superadmin/usuarios?forbidden";
+            }
+        }
+
         List<CadastroFamilia> relatorios = cadastroFamiliaRepository.findByUsuarioIdOrderByDataDesastreDesc(id);
         model.addAttribute("usuario", usuario);
         model.addAttribute("relatorios", relatorios);
@@ -113,8 +150,37 @@ public class SuperAdminUsuarioController {
         return "superadmin/usuarios/relatorios";
     }
 
-    private void preencherListas(Model model) {
-        model.addAttribute("municipais", municipalRepository.findAll());
-        model.addAttribute("rolesDisponiveis", Role.values());
+    private void preencherListas(Model model, Authentication authentication) {
+        Usuario usuarioLogado = obterUsuarioLogado(authentication);
+        boolean isMaster = hasRole(authentication, "ROLE_MASTER");
+
+        List<Municipal> municipais = isMaster
+                ? municipalRepository.findAll()
+                : municipalRepository.findByRegionalId(usuarioLogado.getRegional() != null ? usuarioLogado.getRegional().getId() : -1L);
+
+        municipais.sort(Comparator.comparing(Municipal::getNome, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)));
+
+        model.addAttribute("municipais", municipais);
+        model.addAttribute("rolesDisponiveis", rolesPermitidasParaPerfil(isMaster));
+    }
+
+    private Usuario obterUsuarioLogado(Authentication authentication) {
+        if (authentication == null) {
+            throw new IllegalArgumentException("Usuário não autenticado");
+        }
+        return usuarioRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new IllegalArgumentException("Usuário autenticado não encontrado"));
+    }
+
+    private boolean hasRole(Authentication authentication, String authority) {
+        return authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(grantedAuthority -> authority.equals(grantedAuthority.getAuthority()));
+    }
+
+    private List<Role> rolesPermitidasParaPerfil(boolean isMaster) {
+        if (isMaster) {
+            return List.of(Role.values());
+        }
+        return List.of(Role.AGENTECAMPO, Role.MUNICIPAL);
     }
 }

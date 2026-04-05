@@ -143,7 +143,7 @@
             </div>
         </div>
 
-        <div class="col-md-6 col-lg-3" sec:authorize="hasRole('REGIONAL')">
+        <div class="col-md-6 col-lg-3" sec:authorize="hasAnyRole('REGIONAL','MASTER')">
             <div class="dashboard-card warning">
                 <div class="icon">
                     <i class="bi bi-people"></i>
@@ -151,6 +151,19 @@
                 <h3>Usuários</h3>
                 <p>Gerenciar usuários do sistema</p>
                 <a th:href="@{/superadmin/usuarios}" class="btn btn-warning">
+                    <i class="bi bi-arrow-right"></i> Gerenciar
+                </a>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3" sec:authorize="hasRole('MASTER')">
+            <div class="dashboard-card info">
+                <div class="icon">
+                    <i class="bi bi-diagram-3"></i>
+                </div>
+                <h3>Regionais</h3>
+                <p>Criar regionais e vincular municípios</p>
+                <a th:href="@{/master/regionais}" class="btn btn-primary">
                     <i class="bi bi-arrow-right"></i> Gerenciar
                 </a>
             </div>

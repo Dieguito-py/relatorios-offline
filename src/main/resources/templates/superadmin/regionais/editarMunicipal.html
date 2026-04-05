@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::content}, ~{::custom-styles}, ~{::custom-scripts})}">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Municipal</title>
+</head>
+<body>
+<th:block th:fragment="custom-styles"></th:block>
+
+<th:block th:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Editar municipal</h1>
+            <p class="text-muted mb-0" th:text="${municipal.nome}">Municipal</p>
+        </div>
+        <a href="/master/regionais" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form th:action="@{|/master/regionais/municipais/${municipal.id}/editar|}" method="post">
+                <div class="mb-3">
+                    <label class="form-label" for="nome">Nome do municipal</label>
+                    <input id="nome" name="nome" class="form-control" required maxlength="100" th:value="${municipal.nome}">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="regionalId">Regional</label>
+                    <select id="regionalId" name="regionalId" class="form-select" required>
+                        <option value="" disabled>Selecione</option>
+                        <option th:each="regional : ${regionais}"
+                                th:value="${regional.id}"
+                                th:text="${regional.nome}"
+                                th:selected="${municipal.regional != null and municipal.regional.id == regional.id}">
+                            Regional
+                        </option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Salvar alterações</button>
+            </form>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="custom-scripts"></th:block>
+</body>
+</html>
+

@@ -16,5 +16,7 @@ public interface CadastroFamiliaRepository extends JpaRepository<CadastroFamilia
     @EntityGraph(attributePaths = "fotosResidencia")
     Optional<CadastroFamilia> findByIdAndRegionalId(Long id, Long regionalId);
     List<CadastroFamilia> findByUsuarioIdOrderByDataDesastreDesc(Long usuarioId);
+    boolean existsByRegionalId(Long regionalId);
+    boolean existsByMunicipalId(Long municipalId);
 }
 

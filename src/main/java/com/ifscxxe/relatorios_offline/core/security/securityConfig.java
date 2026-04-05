@@ -33,9 +33,9 @@ public class securityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("MUNICIPAL")
-                        .requestMatchers("/api/user/**").hasAnyRole("AGENTECAMPO", "MUNICIPAL")
-                        .requestMatchers("/api/relatorios/**", "/api/cadastros-familia/**").hasAnyRole("MUNICIPAL", "AGENTECAMPO")
+                        .requestMatchers("/api/admin/**").hasAnyRole("MUNICIPAL", "MASTER")
+                        .requestMatchers("/api/user/**").hasAnyRole("AGENTECAMPO", "MUNICIPAL", "MASTER")
+                        .requestMatchers("/api/relatorios/**", "/api/cadastros-familia/**").hasAnyRole("MUNICIPAL", "AGENTECAMPO", "REGIONAL", "MASTER")
 
                         .anyRequest().authenticated()
                 )
@@ -53,8 +53,9 @@ public class securityConfig {
                                 "/assets/**", "/uploads/**",
                                 "/login", "/error"
                         ).permitAll()
-                        .requestMatchers("/superadmin/**").hasRole("REGIONAL")
-                        .anyRequest().hasAnyRole("MUNICIPAL", "REGIONAL")
+                        .requestMatchers("/master/**").hasRole("MASTER")
+                        .requestMatchers("/superadmin/**").hasAnyRole("REGIONAL", "MASTER")
+                        .anyRequest().hasAnyRole("MUNICIPAL", "REGIONAL", "MASTER")
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
