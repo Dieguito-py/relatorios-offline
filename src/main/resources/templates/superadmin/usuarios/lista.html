@@ -55,7 +55,7 @@
                     <td th:text="${usuario.username}">usuario</td>
                     <td>
                         <span th:each="role : ${usuario.roles}" class="badge text-bg-primary me-1 mb-1"
-                              th:text="${role}">ROLE</span>
+                              th:text="${role.descricao}">ROLE</span>
                     </td>
                     <td th:text="${usuario.regional != null ? usuario.regional.nome : '-'}">Regional</td>
                     <td th:text="${usuario.municipal != null ? usuario.municipal.nome : '-'}">Municipal</td>

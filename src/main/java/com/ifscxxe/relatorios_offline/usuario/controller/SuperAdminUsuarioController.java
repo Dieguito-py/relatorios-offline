@@ -25,7 +25,7 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/superadmin/usuarios")
-@PreAuthorize("hasRole('SUPERADMIN')")
+@PreAuthorize("hasRole('REGIONAL')")
 public class SuperAdminUsuarioController {
 
     private final UsuarioRepository usuarioRepository;

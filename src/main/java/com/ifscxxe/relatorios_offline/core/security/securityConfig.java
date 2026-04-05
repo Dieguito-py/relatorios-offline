@@ -33,9 +33,9 @@ public class securityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/api/relatorios/**", "/api/cadastros-familia/**").hasAnyRole("ADMIN", "USER")
+                        .requestMatchers("/api/admin/**").hasRole("MUNICIPAL")
+                        .requestMatchers("/api/user/**").hasAnyRole("AGENTECAMPO", "MUNICIPAL")
+                        .requestMatchers("/api/relatorios/**", "/api/cadastros-familia/**").hasAnyRole("MUNICIPAL", "AGENTECAMPO")
 
                         .anyRequest().authenticated()
                 )
@@ -53,8 +53,8 @@ public class securityConfig {
                                 "/assets/**", "/uploads/**",
                                 "/login", "/error"
                         ).permitAll()
-                        .requestMatchers("/superadmin/**").hasRole("SUPERADMIN")
-                        .anyRequest().hasAnyRole("ADMIN", "SUPERADMIN")
+                        .requestMatchers("/superadmin/**").hasRole("REGIONAL")
+                        .anyRequest().hasAnyRole("MUNICIPAL", "REGIONAL")
                 )
                 .formLogin(form -> form
                         .loginPage("/login")

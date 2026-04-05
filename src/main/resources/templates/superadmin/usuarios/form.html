@@ -54,7 +54,7 @@
                                        th:value="${role}"
                                        th:field="*{roles}"
                                        th:id="${'role-' + role}">
-                                <label class="form-check-label" th:for="${'role-' + role}" th:text="${role}"></label>
+                                <label class="form-check-label" th:for="${'role-' + role}" th:text="${role.descricao}"></label>
                             </div>
                         </div>
                         <div class="text-danger" th:if="${#fields.hasErrors('roles')}" th:errors="*{roles}"></div>

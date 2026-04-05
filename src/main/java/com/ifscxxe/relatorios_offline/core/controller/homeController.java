@@ -43,7 +43,7 @@ public class homeController {
             model.addAttribute("roleNames", authentication.getAuthorities().stream()
                     .map(granted -> Role.fromString(granted.getAuthority()))
                     .filter(Objects::nonNull)
-                    .map(Role::name)
+                    .map(Role::getDescricao)
                     .toList());
         }
         return "core/home";

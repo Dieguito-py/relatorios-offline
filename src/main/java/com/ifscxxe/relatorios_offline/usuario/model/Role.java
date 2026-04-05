@@ -1,9 +1,15 @@
 package com.ifscxxe.relatorios_offline.usuario.model;
 
 public enum Role {
-    USER,
-    ADMIN,
-    SUPERADMIN;
+    AGENTECAMPO("Agente de Campo"),
+    MUNICIPAL("Municipal"),
+    REGIONAL("Regional");
+
+    private final String descricao;
+
+    Role(String descricao) {
+        this.descricao = descricao;
+    }
 
     public static Role fromString(String value) {
         if (value == null) return null;
@@ -11,14 +17,19 @@ public enum Role {
         if (v.startsWith("ROLE_")) {
             v = v.substring(5);
         }
-        try {
-            return Role.valueOf(v);
-        } catch (IllegalArgumentException ex) {
-            return null;
-        }
+        return switch (v) {
+            case "USER", "AGENTECAMPO" -> AGENTECAMPO;
+            case "ADMIN", "MUNICIPAL" -> MUNICIPAL;
+            case "SUPERADMIN", "REGIONAL" -> REGIONAL;
+            default -> null;
+        };
     }
 
     public String asAuthority() {
         return "ROLE_" + name();
+    }
+
+    public String getDescricao() {
+        return descricao;
     }
 }
