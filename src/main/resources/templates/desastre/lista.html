@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::content}, ~{::custom-styles}, ~{::custom-scripts})}">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro de Desastres</title>
+</head>
+<body>
+<th:block th:fragment="custom-styles">
+    <style>
+        .management-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+    </style>
+</th:block>
+
+<th:block th:fragment="content">
+    <div th:if="${param.created}" class="alert alert-success" role="alert">
+        Desastre cadastrado com sucesso.
+    </div>
+    <div th:if="${param.updated}" class="alert alert-success" role="alert">
+        Desastre atualizado com sucesso.
+    </div>
+    <div th:if="${param.invalidDesastre}" class="alert alert-danger" role="alert">
+        Desastre não encontrado.
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Desastres</h1>
+            <p class="text-muted mb-0">Crie, consulte e edite os desastres cadastrados.</p>
+        </div>
+        <div class="btn-group">
+            <a href="/" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+            <a href="/desastres/novo" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Novo desastre
+            </a>
+        </div>
+    </div>
+
+    <div class="management-card">
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Descrição</th>
+                    <th>Período</th>
+                    <th>Ações</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(desastres)}">
+                    <td colspan="4" class="text-center text-muted py-4">Nenhum desastre cadastrado.</td>
+                </tr>
+                <tr th:each="desastre : ${desastres}">
+                    <td th:text="${desastre.tipoDesastre.descricao}">Tipo</td>
+                    <td th:text="${desastre.descricao}">Descrição</td>
+                    <td>
+                        <span th:text="${#temporals.format(desastre.dataDesastreDe, 'dd/MM/yyyy')}">01/01/2026</span>
+                        -
+                        <span th:text="${#temporals.format(desastre.dataDesastreAte, 'dd/MM/yyyy')}">05/01/2026</span>
+                    </td>
+                    <td class="d-flex gap-2">
+                        <a th:href="@{|/desastres/${desastre.id}|}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i> Relatórios
+                        </a>
+                        <a th:href="@{|/desastres/${desastre.id}/editar|}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="custom-scripts"></th:block>
+</body>
+</html>
+

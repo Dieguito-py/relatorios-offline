@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::content}, ~{::custom-styles}, ~{::custom-scripts})}">
+<head>
+    <meta charset="UTF-8">
+    <title>Desastre</title>
+</head>
+<body>
+<th:block th:fragment="custom-styles"></th:block>
+
+<th:block th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1" th:text="${desastre.id == null ? 'Novo desastre' : 'Editar desastre'}">Desastre</h1>
+            <p class="text-muted mb-0">Preencha os dados do desastre e mantenha os vínculos atualizados.</p>
+        </div>
+        <div class="btn-group">
+            <a href="/desastres" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+            <a th:if="${desastre.id != null}" th:href="@{|/desastres/${desastre.id}|}" class="btn btn-outline-primary">
+                <i class="bi bi-eye"></i> Ver relatórios
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form th:action="@{${formAction}}" th:object="${desastre}" method="post">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label" for="tipoDesastre">Tipo de desastre</label>
+                        <select id="tipoDesastre" th:field="*{tipoDesastre}" class="form-select" required>
+                            <option value="" selected disabled>Selecione</option>
+                            <option th:each="tipo : ${tiposDesastre}" th:value="${tipo}" th:text="${tipo.descricao}">Tipo</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="dataDesastreDe">Data do desastre (de)</label>
+                        <input id="dataDesastreDe" type="date" th:field="*{dataDesastreDe}" class="form-control" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="dataDesastreAte">Data do desastre (até)</label>
+                        <input id="dataDesastreAte" type="date" th:field="*{dataDesastreAte}" class="form-control" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="descricao">Descrição</label>
+                        <textarea id="descricao" th:field="*{descricao}" class="form-control" rows="4" required></textarea>
+                    </div>
+                </div>
+                <div class="mt-4 d-flex justify-content-end gap-2">
+                    <a href="/desastres" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm" th:if="${relatoriosVinculados != null}">
+        <div class="card-body">
+            <h2 class="h5 mb-3">Relatórios vinculados</h2>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Nome atingido</th>
+                        <th>Cidade</th>
+                        <th>Ação</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(relatoriosVinculados)}">
+                        <td colspan="4" class="text-center text-muted py-4">Nenhum relatório vinculado a este desastre.</td>
+                    </tr>
+                    <tr th:each="relatorio : ${relatoriosVinculados}">
+                        <td th:text="${#temporals.format(relatorio.dataDesastre, 'dd/MM/yyyy HH:mm')}">01/01/2026 09:00</td>
+                        <td th:text="${relatorio.nomeAtingido}">Nome</td>
+                        <td th:text="${relatorio.cidadeAtingido}">Cidade</td>
+                        <td>
+                            <a th:href="@{/relatorios/{id}(id=${relatorio.id})}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> Ver relatório
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="custom-scripts"></th:block>
+</body>
+</html>
+

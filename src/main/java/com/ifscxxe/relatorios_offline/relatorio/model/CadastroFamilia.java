@@ -3,6 +3,7 @@ package com.ifscxxe.relatorios_offline.relatorio.model;
 import com.ifscxxe.relatorios_offline.coordenadoria.model.Municipal;
 import com.ifscxxe.relatorios_offline.coordenadoria.model.Regional;
 import com.ifscxxe.relatorios_offline.core.storage.StoredFileMetadata;
+import com.ifscxxe.relatorios_offline.desastre.model.Desastre;
 import com.ifscxxe.relatorios_offline.usuario.model.Usuario;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -91,6 +92,12 @@ public class CadastroFamilia {
     @JoinColumn(name = "regional_id")
     private Regional regional;
 
+    @ManyToOne
+    @JoinColumn(name = "desastre_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Desastre desastre;
+
     @PrePersist
     protected void onCreate() {
         this.dataDesastre = LocalDateTime.now();
@@ -107,6 +114,3 @@ public class CadastroFamilia {
         fotosResidencia.add(foto);
     }
 }
-
-
-

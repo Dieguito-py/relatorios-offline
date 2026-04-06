@@ -112,14 +112,19 @@ public class RelatorioController {
 
             relatorio.setUsuario(usuario);
 
-            Municipal municipal = usuario.getMunicipal();
+            Municipal municipal;
             if (request.municipalId() != null) {
                 municipal = municipalRepository.findById(request.municipalId())
                         .orElseThrow(() -> new IllegalArgumentException("Municipal não encontrado"));
+            } else {
+                municipal = usuario.getMunicipal();
+                if (municipal == null) {
+                    throw new IllegalArgumentException("Informe municipalId para criar o relatório.");
+                }
             }
 
             relatorio.setMunicipal(municipal);
-            relatorio.setRegional(municipal != null && municipal.getRegional() != null
+            relatorio.setRegional(municipal.getRegional() != null
                     ? municipal.getRegional()
                     : usuario.getRegional());
 
@@ -163,6 +168,4 @@ public class RelatorioController {
                     .body(Map.of("error", "Erro ao criar relatório: " + e.getMessage()));
         }
     }
-
-
 }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
       th:replace="~{layout/base :: layout(~{::content}, ~{::custom-styles}, ~{::custom-scripts})}">
 <head>
     <meta charset="UTF-8">
@@ -93,7 +93,7 @@
                 <tbody>
                 <tr th:if="${relatorios == null || #lists.isEmpty(relatorios)}">
                     <td colspan="6" class="text-center text-muted py-5">
-                        Nenhum cadastro encontrado para a regional atual.
+                        Nenhum cadastro encontrado para o seu escopo de acesso.
                     </td>
                 </tr>
                 <tr th:each="relatorio : ${relatorios}">

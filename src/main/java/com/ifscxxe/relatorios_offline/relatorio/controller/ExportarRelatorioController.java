@@ -50,7 +50,26 @@ public class ExportarRelatorioController {
 
         if (authentication != null) {
             Usuario usuario = usuarioRepository.findByUsername(authentication.getName()).orElse(null);
-            if (usuario != null && usuario.getRegional() != null) {
+            boolean isMunicipal = isMunicipal(authentication);
+
+            if (usuario != null && isMunicipal && usuario.getMunicipal() != null) {
+                Long municipalId = usuario.getMunicipal().getId();
+                if (inicio == null && fim == null) {
+                    relatorios = cadastroFamiliaRepository.findByMunicipalIdOrderByIdDesc(municipalId);
+                } else {
+                    LocalDateTime inicioDateTime = inicio != null
+                            ? inicio.atStartOfDay()
+                            : LocalDate.of(1970, Month.JANUARY, 1).atStartOfDay();
+                    LocalDateTime fimDateTime = fim != null
+                            ? fim.atTime(LocalTime.MAX)
+                            : LocalDate.of(9999, Month.DECEMBER, 31).atTime(LocalTime.MAX);
+                    relatorios = cadastroFamiliaRepository.findByMunicipalIdAndDataDesastreBetweenOrderByDataDesastreDesc(
+                            municipalId,
+                            inicioDateTime,
+                            fimDateTime
+                    );
+                }
+            } else if (usuario != null && usuario.getRegional() != null) {
                 Long regionalId = usuario.getRegional().getId();
                 if (inicio == null && fim == null) {
                     relatorios = cadastroFamiliaRepository.findByRegionalIdOrderByIdDesc(regionalId);
@@ -128,8 +147,7 @@ public class ExportarRelatorioController {
 
         // Preencher dados
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        
+
         int rowNum = 1;
         for (CadastroFamilia relatorio : relatorios) {
             Row row = sheet.createRow(rowNum++);
@@ -225,5 +243,10 @@ public class ExportarRelatorioController {
             cell.setCellValue(value.toString());
         }
         cell.setCellStyle(style);
+    }
+
+    private boolean isMunicipal(Authentication authentication) {
+        return authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(granted -> "ROLE_MUNICIPAL".equals(granted.getAuthority()));
     }
 }

@@ -60,10 +60,10 @@
         <div class="col-lg-5">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h2 class="h5 mb-3">Nova regional</h2>
+                    <h2 class="h5 mb-3">Nova Coordenadoria Regional (COREDEC)</h2>
                     <form th:action="@{/master/regionais}" method="post">
                         <div class="mb-3">
-                            <label class="form-label" for="nome">Nome da regional</label>
+                            <label class="form-label" for="nome">Nome da coordenadoria regional</label>
                             <input id="nome" name="nome" class="form-control" required maxlength="100">
                         </div>
 
@@ -76,10 +76,10 @@
         <div class="col-lg-7">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h2 class="h5 mb-3">Novo municipal</h2>
+                    <h2 class="h5 mb-3">Nova Coordenadoria Municipal (COMPDEC)</h2>
                     <form th:action="@{/master/regionais/municipais}" method="post" class="row g-2 mb-4">
                         <div class="col-md-5">
-                            <label class="form-label" for="municipalNome">Nome do municipal</label>
+                            <label class="form-label" for="municipalNome">Nome da coordenadoria municipal</label>
                             <input id="municipalNome" name="nome" class="form-control" required maxlength="100">
                         </div>
                         <div class="col-md-5">
@@ -154,7 +154,7 @@
                         </ul>
                     </nav>
 
-                    <h2 class="h5 mt-4 mb-3">Municipais cadastrados</h2>
+                    <h2 class="h5 mt-4 mb-3">COMPDECs Cadastradas</h2>
                     <form method="get" action="/master/regionais" class="row g-2 mb-3">
                         <div class="col-md-4">
                             <input class="form-control" type="search" name="qMunicipal" th:value="${qMunicipal}" placeholder="Pesquisar municipal">

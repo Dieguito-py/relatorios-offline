@@ -44,7 +44,26 @@ public class ConsultarRelatorioController {
         List<CadastroFamilia> relatorios = Collections.emptyList();
         if (authentication != null) {
             Usuario usuario = usuarioRepository.findByUsername(authentication.getName()).orElse(null);
-            if (usuario != null && usuario.getRegional() != null) {
+            boolean isMunicipal = isMunicipal(authentication);
+
+            if (usuario != null && isMunicipal && usuario.getMunicipal() != null) {
+                Long municipalId = usuario.getMunicipal().getId();
+                if (inicio == null && fim == null) {
+                    relatorios = cadastroFamiliaRepository.findByMunicipalIdOrderByIdDesc(municipalId);
+                } else {
+                    LocalDateTime inicioDateTime = inicio != null
+                            ? inicio.atStartOfDay()
+                            : LocalDate.of(1970, Month.JANUARY, 1).atStartOfDay();
+                    LocalDateTime fimDateTime = fim != null
+                            ? fim.atTime(LocalTime.MAX)
+                            : LocalDate.of(9999, Month.DECEMBER, 31).atTime(LocalTime.MAX);
+                    relatorios = cadastroFamiliaRepository.findByMunicipalIdAndDataDesastreBetweenOrderByDataDesastreDesc(
+                            municipalId,
+                            inicioDateTime,
+                            fimDateTime
+                    );
+                }
+            } else if (usuario != null && usuario.getRegional() != null) {
                 Long regionalId = usuario.getRegional().getId();
                 if (inicio == null && fim == null) {
                     relatorios = cadastroFamiliaRepository.findByRegionalIdOrderByIdDesc(regionalId);
@@ -75,12 +94,29 @@ public class ConsultarRelatorioController {
             return "redirect:/login";
         }
         Optional<Usuario> usuarioOpt = usuarioRepository.findByUsername(authentication.getName());
-        if (usuarioOpt.isEmpty() || usuarioOpt.get().getRegional() == null) {
-            model.addAttribute("error", "Usuário sem regional associada.");
+        if (usuarioOpt.isEmpty()) {
+            model.addAttribute("error", "Usuário não encontrado.");
             return "redirect:/relatorios/consultarRelatorios";
         }
-        Long regionalId = usuarioOpt.get().getRegional().getId();
-        Optional<CadastroFamilia> relatorioOpt = cadastroFamiliaRepository.findByIdAndRegionalId(id, regionalId);
+
+        Usuario usuario = usuarioOpt.get();
+        boolean isMunicipal = isMunicipal(authentication);
+        Optional<CadastroFamilia> relatorioOpt;
+
+        if (isMunicipal) {
+            if (usuario.getMunicipal() == null) {
+                model.addAttribute("error", "Usuário sem municipal associada.");
+                return "redirect:/relatorios/consultarRelatorios";
+            }
+            relatorioOpt = cadastroFamiliaRepository.findByIdAndMunicipalId(id, usuario.getMunicipal().getId());
+        } else {
+            if (usuario.getRegional() == null) {
+                model.addAttribute("error", "Usuário sem regional associada.");
+                return "redirect:/relatorios/consultarRelatorios";
+            }
+            relatorioOpt = cadastroFamiliaRepository.findByIdAndRegionalId(id, usuario.getRegional().getId());
+        }
+
         if (relatorioOpt.isEmpty()) {
             model.addAttribute("error", "Relatório não encontrado ou indisponível.");
             return "redirect:/relatorios/consultarRelatorios";
@@ -117,5 +153,10 @@ public class ConsultarRelatorioController {
             return "/" + fotoResidencia;
         }
         return "data:image/jpeg;base64," + fotoResidencia;
+    }
+
+    private boolean isMunicipal(Authentication authentication) {
+        return authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(granted -> "ROLE_MUNICIPAL".equals(granted.getAuthority()));
     }
 }
