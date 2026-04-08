@@ -9,19 +9,6 @@
 <th:block th:fragment="custom-styles"></th:block>
 
 <th:block th:fragment="content">
-    <div th:if="${param.linked}" class="alert alert-success" role="alert">
-        Relatório(s) vinculado(s) ao desastre com sucesso.
-    </div>
-    <div th:if="${param.unlinked}" class="alert alert-success" role="alert">
-        Relatório desvinculado do desastre com sucesso.
-    </div>
-    <div th:if="${param.noneSelected}" class="alert alert-warning" role="alert">
-        Selecione ao menos um relatório para vincular.
-    </div>
-    <div th:if="${param.relatorioInvalido}" class="alert alert-danger" role="alert">
-        Relatório inválido para o seu escopo de acesso.
-    </div>
-
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 mb-1">Detalhes do desastre</h1>
@@ -30,6 +17,9 @@
         <div class="btn-group">
             <a href="/desastres" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+            <a th:href="@{|/desastres/${desastre.id}/vinculos|}" class="btn btn-outline-primary">
+                <i class="bi bi-link-45deg"></i> Gerenciar vínculos
             </a>
             <a th:href="@{|/desastres/${desastre.id}/editar|}" class="btn btn-primary">
                 <i class="bi bi-pencil"></i> Editar desastre
@@ -57,82 +47,6 @@
                     <div th:text="${desastre.descricao}">Descrição</div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <h2 class="h5 mb-3">Vincular relatórios existentes</h2>
-
-            <form method="get" class="row g-2 mb-3">
-                <div class="col-md-5">
-                    <label class="form-label" for="q">Pesquisar</label>
-                    <input id="q" type="search" name="q" class="form-control" th:value="${q}" placeholder="Nome atingido ou cidade">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label" for="inicio">Data inicial</label>
-                    <input id="inicio" type="date" name="inicio" class="form-control" th:value="${inicio}">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label" for="fim">Data final</label>
-                    <input id="fim" type="date" name="fim" class="form-control" th:value="${fim}">
-                </div>
-                <div class="col-md-1 d-grid align-self-end">
-                    <button type="submit" class="btn btn-outline-secondary">
-                        <i class="bi bi-filter"></i>
-                    </button>
-                </div>
-            </form>
-
-            <form th:action="@{|/desastres/${desastre.id}/vincular|}" method="post">
-                <div class="table-responsive">
-                    <table class="table align-middle">
-                        <thead>
-                        <tr>
-                            <th style="width: 42px;"><input type="checkbox" id="check-all"></th>
-                            <th>Data</th>
-                            <th>Nome atingido</th>
-                            <th>Cidade</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr th:if="${#lists.isEmpty(relatoriosDisponiveisPage.content)}">
-                            <td colspan="4" class="text-center text-muted py-4">Não há relatórios disponíveis para vincular no seu escopo.</td>
-                        </tr>
-                        <tr th:each="relatorio : ${relatoriosDisponiveisPage.content}">
-                            <td>
-                                <input class="form-check-input relatorio-check" type="checkbox" name="relatorioIds" th:value="${relatorio.id}">
-                            </td>
-                            <td th:text="${#temporals.format(relatorio.dataDesastre, 'dd/MM/yyyy HH:mm')}">01/01/2026 09:00</td>
-                            <td th:text="${relatorio.nomeAtingido}">Nome</td>
-                            <td th:text="${relatorio.cidadeAtingido}">Cidade</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center mt-3">
-                    <nav th:if="${relatoriosDisponiveisPage.totalPages > 1}" aria-label="Paginação relatórios disponíveis">
-                        <ul class="pagination pagination-sm mb-0">
-                            <li class="page-item" th:classappend="${relatoriosDisponiveisPage.first} ? 'disabled'">
-                                <a class="page-link"
-                                   th:href="@{/desastres/{id}(id=${desastre.id},q=${q},inicio=${inicio},fim=${fim},page=${relatoriosDisponiveisPage.number - 1})}">Anterior</a>
-                            </li>
-                            <li class="page-item disabled">
-                                <span class="page-link" th:text="${(relatoriosDisponiveisPage.number + 1) + ' / ' + relatoriosDisponiveisPage.totalPages}">1 / 1</span>
-                            </li>
-                            <li class="page-item" th:classappend="${relatoriosDisponiveisPage.last} ? 'disabled'">
-                                <a class="page-link"
-                                   th:href="@{/desastres/{id}(id=${desastre.id},q=${q},inicio=${inicio},fim=${fim},page=${relatoriosDisponiveisPage.number + 1})}">Próxima</a>
-                            </li>
-                        </ul>
-                    </nav>
-
-                    <button type="submit" class="btn btn-primary" th:disabled="${#lists.isEmpty(relatoriosDisponiveisPage.content)}">
-                        <i class="bi bi-link-45deg"></i> Vincular selecionados
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 
@@ -177,20 +91,7 @@
 </th:block>
 
 <th:block th:fragment="custom-scripts">
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const checkAll = document.getElementById('check-all');
-            const checks = document.querySelectorAll('.relatorio-check');
-            if (!checkAll || checks.length === 0) {
-                return;
-            }
-            checkAll.addEventListener('change', function () {
-                checks.forEach(function (check) {
-                    check.checked = checkAll.checked;
-                });
-            });
-        });
-    </script>
+    <script></script>
 </th:block>
 </body>
 </html>

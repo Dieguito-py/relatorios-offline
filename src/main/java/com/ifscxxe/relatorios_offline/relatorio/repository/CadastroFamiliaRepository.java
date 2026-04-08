@@ -15,7 +15,9 @@ import java.util.Optional;
 
 @Repository
 public interface CadastroFamiliaRepository extends JpaRepository<CadastroFamilia, Long> {
+    @EntityGraph(attributePaths = "usuario")
     List<CadastroFamilia> findByRegionalIdOrderByIdDesc(Long regionalId);
+    @EntityGraph(attributePaths = "usuario")
     List<CadastroFamilia> findByRegionalIdAndDataDesastreBetweenOrderByDataDesastreDesc(Long regionalId, LocalDateTime inicio, LocalDateTime fim);
     @EntityGraph(attributePaths = "fotosResidencia")
     Optional<CadastroFamilia> findByIdAndRegionalId(Long id, Long regionalId);
@@ -23,7 +25,9 @@ public interface CadastroFamiliaRepository extends JpaRepository<CadastroFamilia
     List<CadastroFamilia> findByDesastreIdOrderByDataDesastreDesc(Long desastreId);
     boolean existsByRegionalId(Long regionalId);
     boolean existsByMunicipalId(Long municipalId);
+    @EntityGraph(attributePaths = "usuario")
     List<CadastroFamilia> findByMunicipalIdOrderByIdDesc(Long municipalId);
+    @EntityGraph(attributePaths = "usuario")
     List<CadastroFamilia> findByMunicipalIdAndDataDesastreBetweenOrderByDataDesastreDesc(Long municipalId, LocalDateTime inicio, LocalDateTime fim);
     @EntityGraph(attributePaths = "fotosResidencia")
     Optional<CadastroFamilia> findByIdAndMunicipalId(Long id, Long municipalId);

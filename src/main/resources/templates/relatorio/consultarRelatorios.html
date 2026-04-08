@@ -84,6 +84,7 @@
                 <tr>
                     <th>Data</th>
                     <th>Nome atingido</th>
+                    <th>Usuario remetente</th>
                     <th>Cidade</th>
                     <th>Moradia</th>
                     <th>Dano residência</th>
@@ -92,13 +93,14 @@
                 </thead>
                 <tbody>
                 <tr th:if="${relatorios == null || #lists.isEmpty(relatorios)}">
-                    <td colspan="6" class="text-center text-muted py-5">
+                    <td colspan="7" class="text-center text-muted py-5">
                         Nenhum cadastro encontrado para o seu escopo de acesso.
                     </td>
                 </tr>
                 <tr th:each="relatorio : ${relatorios}">
                     <td th:text="${#temporals.format(relatorio.dataDesastre, 'dd/MM/yyyy HH:mm')}">01/01/2024</td>
                     <td th:text="${relatorio.nomeAtingido}">Nome</td>
+                    <td th:text="${relatorio.usuario != null ? (#strings.isEmpty(relatorio.usuario.nome) ? relatorio.usuario.username : relatorio.usuario.nome) : 'Nao informado'}">Usuario</td>
                     <td th:text="${relatorio.cidadeAtingido}">Cidade</td>
                     <td th:text="${relatorio.moradia}">Moradia</td>
                     <td th:text="${relatorio.danoResidencia}">Dano</td>

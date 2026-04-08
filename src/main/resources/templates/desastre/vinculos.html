@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::content}, ~{::custom-styles}, ~{::custom-scripts})}">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerenciar Vinculos</title>
+</head>
+<body>
+<th:block th:fragment="custom-styles"></th:block>
+
+<th:block th:fragment="content">
+    <div th:if="${param.linked}" class="alert alert-success" role="alert">Relatorio(s) vinculado(s) com sucesso.</div>
+    <div th:if="${param.unlinked}" class="alert alert-success" role="alert">Relatorio(s) desvinculado(s) com sucesso.</div>
+    <div th:if="${param.noneSelected}" class="alert alert-warning" role="alert">Selecione ao menos um relatorio para vincular.</div>
+    <div th:if="${param.noneSelectedUnlink}" class="alert alert-warning" role="alert">Selecione ao menos um relatorio para desvincular.</div>
+    <div th:if="${param.relatorioInvalido}" class="alert alert-danger" role="alert">Relatorio invalido para o seu escopo.</div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Gerenciar vinculos</h1>
+            <p class="text-muted mb-0" th:text="${desastre.tipoDesastre.descricao + ' - ' + desastre.descricao}">Desastre</p>
+        </div>
+        <div class="btn-group">
+            <a th:href="@{|/desastres/${desastre.id}|}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar ao detalhe
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Disponiveis para vincular</h2>
+
+                    <form method="get" class="row g-2 mb-3">
+                        <div class="col-12">
+                            <label for="q" class="form-label">Pesquisar</label>
+                            <input id="q" type="search" name="q" class="form-control" th:value="${q}" placeholder="Nome atingido ou cidade">
+                        </div>
+                        <div class="col-md-5">
+                            <label for="inicio" class="form-label">Data inicial</label>
+                            <input id="inicio" type="date" name="inicio" class="form-control" th:value="${inicio}">
+                        </div>
+                        <div class="col-md-5">
+                            <label for="fim" class="form-label">Data final</label>
+                            <input id="fim" type="date" name="fim" class="form-control" th:value="${fim}">
+                        </div>
+                        <div class="col-md-2 d-grid">
+                            <button type="submit" class="btn btn-outline-secondary"><i class="bi bi-filter"></i></button>
+                        </div>
+                    </form>
+
+                    <form th:action="@{|/desastres/${desastre.id}/vincular|}" method="post">
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                <tr>
+                                    <th style="width: 42px;">
+                                        <input type="checkbox" id="check-all-left" aria-label="Selecionar todos disponiveis">
+                                    </th>
+                                    <th>Data</th>
+                                    <th>Nome</th>
+                                    <th>Cidade</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:if="${#lists.isEmpty(relatoriosDisponiveisPage.content)}">
+                                    <td colspan="4" class="text-center text-muted py-4">Sem relatorios disponiveis.</td>
+                                </tr>
+                                <tr th:each="relatorio : ${relatoriosDisponiveisPage.content}">
+                                    <td><input class="form-check-input check-left" type="checkbox" name="relatorioIds" th:value="${relatorio.id}" aria-label="Selecionar relatorio"></td>
+                                    <td th:text="${#temporals.format(relatorio.dataDesastre, 'dd/MM/yyyy HH:mm')}">01/01/2026</td>
+                                    <td th:text="${relatorio.nomeAtingido}">Nome</td>
+                                    <td th:text="${relatorio.cidadeAtingido}">Cidade</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <nav th:if="${relatoriosDisponiveisPage.totalPages > 1}" aria-label="Paginacao">
+                                <ul class="pagination pagination-sm mb-0">
+                                    <li class="page-item" th:classappend="${relatoriosDisponiveisPage.first} ? 'disabled'">
+                                        <a class="page-link" th:href="@{/desastres/{id}/vinculos(id=${desastre.id},q=${q},inicio=${inicio},fim=${fim},page=${relatoriosDisponiveisPage.number - 1})}">Anterior</a>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link" th:text="${(relatoriosDisponiveisPage.number + 1) + ' / ' + relatoriosDisponiveisPage.totalPages}">1 / 1</span>
+                                    </li>
+                                    <li class="page-item" th:classappend="${relatoriosDisponiveisPage.last} ? 'disabled'">
+                                        <a class="page-link" th:href="@{/desastres/{id}/vinculos(id=${desastre.id},q=${q},inicio=${inicio},fim=${fim},page=${relatoriosDisponiveisPage.number + 1})}">Proxima</a>
+                                    </li>
+                                </ul>
+                            </nav>
+
+                            <button type="submit" class="btn btn-primary" th:disabled="${#lists.isEmpty(relatoriosDisponiveisPage.content)}">
+                                <i class="bi bi-link-45deg"></i> Vincular selecionados
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Vinculados</h2>
+
+                    <form th:action="@{|/desastres/${desastre.id}/desvincular-lote|}" method="post">
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                <tr>
+                                    <th style="width: 42px;">
+                                        <input type="checkbox" id="check-all-right" aria-label="Selecionar todos vinculados">
+                                    </th>
+                                    <th>Data</th>
+                                    <th>Nome</th>
+                                    <th>Cidade</th>
+                                    <th>Acoes</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:if="${#lists.isEmpty(relatoriosVinculados)}">
+                                    <td colspan="5" class="text-center text-muted py-4">Nenhum relatorio vinculado.</td>
+                                </tr>
+                                <tr th:each="relatorio : ${relatoriosVinculados}">
+                                    <td><input class="form-check-input check-right" type="checkbox" name="relatorioIds" th:value="${relatorio.id}" aria-label="Selecionar relatorio vinculado"></td>
+                                    <td th:text="${#temporals.format(relatorio.dataDesastre, 'dd/MM/yyyy HH:mm')}">01/01/2026</td>
+                                    <td th:text="${relatorio.nomeAtingido}">Nome</td>
+                                    <td th:text="${relatorio.cidadeAtingido}">Cidade</td>
+                                    <td>
+                                        <a th:href="@{/relatorios/{id}(id=${relatorio.id})}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-3">
+                            <button type="submit" class="btn btn-outline-danger" th:disabled="${#lists.isEmpty(relatoriosVinculados)}">
+                                <i class="bi bi-link-45deg"></i> Desvincular selecionados
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="custom-scripts">
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const bindCheckAll = function (masterId, itemClass) {
+                const master = document.getElementById(masterId);
+                const items = document.querySelectorAll(itemClass);
+                if (!master || items.length === 0) return;
+                master.addEventListener('change', function () {
+                    items.forEach(function (item) { item.checked = master.checked; });
+                });
+            };
+            bindCheckAll('check-all-left', '.check-left');
+            bindCheckAll('check-all-right', '.check-right');
+        });
+    </script>
+</th:block>
+</body>
+</html>
+
+

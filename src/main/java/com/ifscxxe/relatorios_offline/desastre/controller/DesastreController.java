@@ -78,13 +78,28 @@ public class DesastreController {
     }
 
     @GetMapping("/{id}")
-    public String detalhar(@PathVariable Long id,
-                           Authentication authentication,
-                           @RequestParam(value = "q", required = false) String q,
-                           @RequestParam(value = "inicio", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
-                           @RequestParam(value = "fim", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
-                           @RequestParam(value = "page", defaultValue = "0") int page,
-                           Model model) {
+    public String detalhar(@PathVariable Long id, Authentication authentication, Model model) {
+        Desastre desastre = desastreRepository.findById(id).orElse(null);
+        if (desastre == null) {
+            return "redirect:/desastres?invalidDesastre";
+        }
+
+        List<CadastroFamilia> relatoriosVinculados = obterRelatoriosVinculados(id, authentication);
+
+        model.addAttribute("desastre", desastre);
+        model.addAttribute("relatoriosVinculados", relatoriosVinculados);
+        model.addAttribute("pageTitle", "Detalhes do Desastre");
+        return "desastre/detalhe";
+    }
+
+    @GetMapping("/{id}/vinculos")
+    public String gerenciarVinculos(@PathVariable Long id,
+                                    Authentication authentication,
+                                    @RequestParam(value = "q", required = false) String q,
+                                    @RequestParam(value = "inicio", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+                                    @RequestParam(value = "fim", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
+                                    @RequestParam(value = "page", defaultValue = "0") int page,
+                                    Model model) {
         Desastre desastre = desastreRepository.findById(id).orElse(null);
         if (desastre == null) {
             return "redirect:/desastres?invalidDesastre";
@@ -100,8 +115,8 @@ public class DesastreController {
         model.addAttribute("q", q);
         model.addAttribute("inicio", inicio);
         model.addAttribute("fim", fim);
-        model.addAttribute("pageTitle", "Detalhes do Desastre");
-        return "desastre/detalhe";
+        model.addAttribute("pageTitle", "Gerenciar Vínculos de Relatórios");
+        return "desastre/vinculos";
     }
 
     @PostMapping("/{id}/vincular")
@@ -114,7 +129,7 @@ public class DesastreController {
         }
 
         if (relatorioIds == null || relatorioIds.isEmpty()) {
-            return "redirect:/desastres/" + id + "?noneSelected";
+            return "redirect:/desastres/" + id + "/vinculos?noneSelected";
         }
 
         int vinculados = 0;
@@ -130,9 +145,9 @@ public class DesastreController {
         }
 
         if (vinculados == 0) {
-            return "redirect:/desastres/" + id + "?relatorioInvalido";
+            return "redirect:/desastres/" + id + "/vinculos?relatorioInvalido";
         }
-        return "redirect:/desastres/" + id + "?linked";
+        return "redirect:/desastres/" + id + "/vinculos?linked";
     }
 
     @PostMapping("/{id}/desvincular")
@@ -141,17 +156,47 @@ public class DesastreController {
                                        Authentication authentication) {
         Optional<CadastroFamilia> relatorioOpt = obterRelatorioPorEscopo(relatorioId, authentication);
         if (relatorioOpt.isEmpty()) {
-            return "redirect:/desastres/" + id + "?relatorioInvalido";
+            return "redirect:/desastres/" + id + "/vinculos?relatorioInvalido";
         }
 
         CadastroFamilia relatorio = relatorioOpt.get();
         if (relatorio.getDesastre() == null || !id.equals(relatorio.getDesastre().getId())) {
-            return "redirect:/desastres/" + id + "?relatorioInvalido";
+            return "redirect:/desastres/" + id + "/vinculos?relatorioInvalido";
         }
 
         relatorio.setDesastre(null);
         cadastroFamiliaRepository.save(relatorio);
-        return "redirect:/desastres/" + id + "?unlinked";
+        return "redirect:/desastres/" + id + "/vinculos?unlinked";
+    }
+
+    @PostMapping("/{id}/desvincular-lote")
+    public String desvincularRelatorios(@PathVariable Long id,
+                                        @RequestParam(name = "relatorioIds", required = false) List<Long> relatorioIds,
+                                        Authentication authentication) {
+        if (relatorioIds == null || relatorioIds.isEmpty()) {
+            return "redirect:/desastres/" + id + "/vinculos?noneSelectedUnlink";
+        }
+
+        int desvinculados = 0;
+        for (Long relatorioId : relatorioIds) {
+            Optional<CadastroFamilia> relatorioOpt = obterRelatorioPorEscopo(relatorioId, authentication);
+            if (relatorioOpt.isEmpty()) {
+                continue;
+            }
+
+            CadastroFamilia relatorio = relatorioOpt.get();
+            if (relatorio.getDesastre() != null && id.equals(relatorio.getDesastre().getId())) {
+                relatorio.setDesastre(null);
+                cadastroFamiliaRepository.save(relatorio);
+                desvinculados++;
+            }
+        }
+
+        if (desvinculados == 0) {
+            return "redirect:/desastres/" + id + "/vinculos?relatorioInvalido";
+        }
+
+        return "redirect:/desastres/" + id + "/vinculos?unlinked";
     }
 
     @GetMapping("/{id}/editar")
