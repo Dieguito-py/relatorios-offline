@@ -21,10 +21,22 @@
 
     <div class="card shadow-sm">
         <div class="card-body">
+            <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}">Erro</div>
             <form th:action="@{|/master/regionais/${regional.id}/editar|}" method="post">
                 <div class="mb-3">
                     <label class="form-label" for="nome">Nome da regional</label>
                     <input id="nome" name="nome" class="form-control" required maxlength="100" th:value="${regional.nome}">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="templateRelatorioFamilias">Template JRXML (caminho relativo)</label>
+                    <input id="templateRelatorioFamilias"
+                           name="templateRelatorioFamilias"
+                           class="form-control"
+                           maxlength="255"
+                           th:value="${regional.templateRelatorioFamilias}"
+                           placeholder="relatorioFamilias.jrxml">
+                    <small class="text-muted">O sistema gera o caminho final como base-dir/{id-da-regional}/seu-arquivo.jrxml.</small>
                 </div>
 
 

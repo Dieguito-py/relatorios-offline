@@ -15,6 +15,9 @@ public class Regional {
 
     private String nome;
 
+    @Column(name = "template_relatorio_familias", length = 255)
+    private String templateRelatorioFamilias;
+
     @OneToMany(mappedBy = "regional", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Municipal> municipais;
 }

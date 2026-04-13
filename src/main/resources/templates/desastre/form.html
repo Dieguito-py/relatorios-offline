@@ -36,12 +36,8 @@
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label" for="dataDesastreDe">Data do desastre (de)</label>
-                        <input id="dataDesastreDe" type="date" th:field="*{dataDesastreDe}" class="form-control" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label" for="dataDesastreAte">Data do desastre (até)</label>
-                        <input id="dataDesastreAte" type="date" th:field="*{dataDesastreAte}" class="form-control" required>
+                        <label class="form-label" for="dataDesastre">Data e hora do desastre</label>
+                        <input id="dataDesastre" type="datetime-local" th:field="*{dataDesastre}" class="form-control" required>
                     </div>
                     <div class="col-12">
                         <label class="form-label" for="descricao">Descrição</label>

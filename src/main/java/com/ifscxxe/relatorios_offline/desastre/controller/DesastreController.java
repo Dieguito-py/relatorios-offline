@@ -5,13 +5,16 @@ import com.ifscxxe.relatorios_offline.desastre.model.TipoDesastre;
 import com.ifscxxe.relatorios_offline.desastre.repository.DesastreRepository;
 import com.ifscxxe.relatorios_offline.relatorio.model.CadastroFamilia;
 import com.ifscxxe.relatorios_offline.relatorio.repository.CadastroFamiliaRepository;
+import com.ifscxxe.relatorios_offline.relatorio.service.JasperReportService;
 import com.ifscxxe.relatorios_offline.usuario.model.Usuario;
 import com.ifscxxe.relatorios_offline.usuario.repository.UsuarioRepository;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -23,12 +26,18 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 
 @Controller
 @RequestMapping("/desastres")
@@ -38,18 +47,21 @@ public class DesastreController {
     private final DesastreRepository desastreRepository;
     private final CadastroFamiliaRepository cadastroFamiliaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final JasperReportService jasperReportService;
 
     public DesastreController(DesastreRepository desastreRepository,
                               CadastroFamiliaRepository cadastroFamiliaRepository,
-                              UsuarioRepository usuarioRepository) {
+                              UsuarioRepository usuarioRepository,
+                              JasperReportService jasperReportService) {
         this.desastreRepository = desastreRepository;
         this.cadastroFamiliaRepository = cadastroFamiliaRepository;
         this.usuarioRepository = usuarioRepository;
+        this.jasperReportService = jasperReportService;
     }
 
     @GetMapping
     public String listar(Model model) {
-        List<Desastre> desastres = desastreRepository.findAllByOrderByDataDesastreDeDescIdDesc();
+        List<Desastre> desastres = desastreRepository.findAllByOrderByDataDesastreDescIdDesc();
         model.addAttribute("desastres", desastres);
         model.addAttribute("pageTitle", "Cadastro de Desastres");
         return "desastre/lista";
@@ -90,6 +102,106 @@ public class DesastreController {
         model.addAttribute("relatoriosVinculados", relatoriosVinculados);
         model.addAttribute("pageTitle", "Detalhes do Desastre");
         return "desastre/detalhe";
+    }
+
+    @GetMapping("/{id}/exportar-familias")
+    public void exportarFamiliasPorDesastre(@PathVariable Long id,
+                                            Authentication authentication,
+                                            HttpServletResponse response) throws IOException {
+        Desastre desastre = desastreRepository.findById(id).orElse(null);
+        if (desastre == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Desastre não encontrado.");
+        }
+
+        if (authentication == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Usuário não autenticado.");
+        }
+
+        Usuario usuario = usuarioRepository.findByUsername(authentication.getName()).orElse(null);
+        String usuarioGerador = resolveUsuarioGerador(authentication, usuario);
+        List<CadastroFamilia> relatorios;
+        Long regionalId;
+        String templateRelatorioFamilias;
+
+        if (hasAuthority(authentication, "ROLE_MUNICIPAL")) {
+            if (usuario == null || usuario.getMunicipal() == null || usuario.getMunicipal().getRegional() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não foi possível identificar a regional do usuário municipal.");
+            }
+            regionalId = usuario.getMunicipal().getRegional().getId();
+            templateRelatorioFamilias = usuario.getMunicipal().getRegional().getTemplateRelatorioFamilias();
+            relatorios = cadastroFamiliaRepository.findByDesastreIdAndMunicipalIdOrderByDataDesastreDesc(id, usuario.getMunicipal().getId());
+        } else if (hasAuthority(authentication, "ROLE_REGIONAL")) {
+            if (usuario == null || usuario.getRegional() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não foi possível identificar a regional do usuário.");
+            }
+            regionalId = usuario.getRegional().getId();
+            templateRelatorioFamilias = usuario.getRegional().getTemplateRelatorioFamilias();
+            relatorios = cadastroFamiliaRepository.findByDesastreIdAndRegionalIdOrderByDataDesastreDesc(id, regionalId);
+        } else {
+            relatorios = cadastroFamiliaRepository.findByDesastreIdOrderByDataDesastreDesc(id);
+            if (relatorios.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não há relatórios vinculados a este desastre para exportar.");
+            }
+
+            Set<Long> regionaisEncontradas = new TreeSet<>();
+            for (CadastroFamilia relatorio : relatorios) {
+                if (relatorio.getRegional() != null && relatorio.getRegional().getId() != null) {
+                    regionaisEncontradas.add(relatorio.getRegional().getId());
+                }
+            }
+
+            if (regionaisEncontradas.size() != 1) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Para exportação MASTER, os relatórios vinculados devem pertencer a uma única regional."
+                );
+            }
+
+            regionalId = regionaisEncontradas.iterator().next();
+            templateRelatorioFamilias = null;
+            for (CadastroFamilia relatorio : relatorios) {
+                if (relatorio.getRegional() != null
+                        && regionalId.equals(relatorio.getRegional().getId())) {
+                    templateRelatorioFamilias = relatorio.getRegional().getTemplateRelatorioFamilias();
+                    break;
+                }
+            }
+        }
+
+        if (relatorios.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não há relatórios vinculados a este desastre para exportar.");
+        }
+
+        try {
+            Map<String, Object> parametrosAdicionais = new HashMap<>();
+            parametrosAdicionais.put("DESASTRE_ID", desastre.getId());
+            parametrosAdicionais.put("DESASTRE_DESCRICAO", desastre.getDescricao());
+            parametrosAdicionais.put("DESASTRE_TIPO", desastre.getTipoDesastre() != null ? desastre.getTipoDesastre().getDescricao() : null);
+            parametrosAdicionais.put("DESASTRE_DATA", desastre.getDataDesastre());
+            parametrosAdicionais.put("FILTRO_INICIO", desastre.getDataDesastre().toLocalDate());
+            parametrosAdicionais.put("FILTRO_FIM", desastre.getDataDesastre().toLocalDate());
+            parametrosAdicionais.put("USUARIO_GERADOR", usuarioGerador);
+
+            byte[] pdf = jasperReportService.gerarRelatorioPdf(
+                    regionalId,
+                    templateRelatorioFamilias,
+                    relatorios,
+                    parametrosAdicionais
+            );
+
+            response.setContentType("application/pdf");
+            response.setHeader("Content-Disposition", "attachment; filename=familias_atingidas_desastre_" + id + ".pdf");
+            response.getOutputStream().write(pdf);
+            response.getOutputStream().flush();
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage(), ex);
+        } catch (IllegalStateException ex) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Falha ao gerar PDF do relatório do desastre. Detalhe: " + ex.getMessage(),
+                    ex
+            );
+        }
     }
 
     @GetMapping("/{id}/vinculos")
@@ -233,8 +345,7 @@ public class DesastreController {
 
         desastre.setTipoDesastre(form.getTipoDesastre());
         desastre.setDescricao(form.getDescricao().trim());
-        desastre.setDataDesastreDe(form.getDataDesastreDe());
-        desastre.setDataDesastreAte(form.getDataDesastreAte());
+        desastre.setDataDesastre(form.getDataDesastre());
         desastreRepository.save(desastre);
 
         return "redirect:/desastres?updated";
@@ -249,12 +360,8 @@ public class DesastreController {
             model.addAttribute("error", "Informe a descrição do desastre.");
             return true;
         }
-        if (desastre.getDataDesastreDe() == null || desastre.getDataDesastreAte() == null) {
-            model.addAttribute("error", "Informe o período do desastre (de/até).");
-            return true;
-        }
-        if (desastre.getDataDesastreDe().isAfter(desastre.getDataDesastreAte())) {
-            model.addAttribute("error", "A data inicial não pode ser maior que a data final.");
+        if (desastre.getDataDesastre() == null) {
+            model.addAttribute("error", "Informe a data e hora do desastre.");
             return true;
         }
         return false;
@@ -281,6 +388,16 @@ public class DesastreController {
     private boolean hasAuthority(Authentication authentication, String authority) {
         return authentication != null && authentication.getAuthorities().stream()
                 .anyMatch(granted -> authority.equals(granted.getAuthority()));
+    }
+
+    private String resolveUsuarioGerador(Authentication authentication, Usuario usuario) {
+        if (usuario != null && StringUtils.hasText(usuario.getNome())) {
+            return usuario.getNome().trim();
+        }
+        if (authentication != null && StringUtils.hasText(authentication.getName())) {
+            return authentication.getName();
+        }
+        return "sistema";
     }
 
     private Page<CadastroFamilia> obterRelatoriosDisponiveis(Authentication authentication,

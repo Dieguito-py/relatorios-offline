@@ -1,7 +1,9 @@
 package com.ifscxxe.relatorios_offline.relatorio.controller;
 
+import com.ifscxxe.relatorios_offline.coordenadoria.model.Regional;
 import com.ifscxxe.relatorios_offline.relatorio.model.CadastroFamilia;
 import com.ifscxxe.relatorios_offline.relatorio.repository.CadastroFamiliaRepository;
+import com.ifscxxe.relatorios_offline.relatorio.service.JasperReportService;
 import com.ifscxxe.relatorios_offline.usuario.model.Usuario;
 import com.ifscxxe.relatorios_offline.usuario.repository.UsuarioRepository;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,8 +25,10 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/relatorios")
@@ -35,6 +39,9 @@ public class ExportarRelatorioController {
     
     @Autowired
     private CadastroFamiliaRepository cadastroFamiliaRepository;
+
+    @Autowired
+    private JasperReportService jasperReportService;
 
     @GetMapping("/exportar")
     public void exportar(
@@ -47,13 +54,25 @@ public class ExportarRelatorioController {
             @RequestParam(value = "format", required = false, defaultValue = "xlsx") String format
     ) throws IOException {
         List<CadastroFamilia> relatorios = Collections.emptyList();
+        Long regionalId = null;
+        String templateRelatorioFamilias = null;
+        String usuarioGerador = authentication != null ? authentication.getName() : "sistema";
 
         if (authentication != null) {
             Usuario usuario = usuarioRepository.findByUsername(authentication.getName()).orElse(null);
+            if (usuario != null && usuario.getNome() != null && !usuario.getNome().trim().isEmpty()) {
+                usuarioGerador = usuario.getNome().trim();
+            }
             boolean isMunicipal = isMunicipal(authentication);
 
             if (usuario != null && isMunicipal && usuario.getMunicipal() != null) {
                 Long municipalId = usuario.getMunicipal().getId();
+                Regional regional = usuario.getMunicipal().getRegional();
+                if (regional != null) {
+                    regionalId = regional.getId();
+                    templateRelatorioFamilias = regional.getTemplateRelatorioFamilias();
+                }
+
                 if (inicio == null && fim == null) {
                     relatorios = cadastroFamiliaRepository.findByMunicipalIdOrderByIdDesc(municipalId);
                 } else {
@@ -70,7 +89,8 @@ public class ExportarRelatorioController {
                     );
                 }
             } else if (usuario != null && usuario.getRegional() != null) {
-                Long regionalId = usuario.getRegional().getId();
+                regionalId = usuario.getRegional().getId();
+                templateRelatorioFamilias = usuario.getRegional().getTemplateRelatorioFamilias();
                 if (inicio == null && fim == null) {
                     relatorios = cadastroFamiliaRepository.findByRegionalIdOrderByIdDesc(regionalId);
                 } else {
@@ -92,9 +112,44 @@ public class ExportarRelatorioController {
         if ("xlsx".equalsIgnoreCase(format)) {
             gerarExcel(relatorios, response);
         } else if ("pdf".equalsIgnoreCase(format)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Exportação PDF ainda não implementada");
+            gerarPdf(relatorios, response, regionalId, templateRelatorioFamilias, inicio, fim, usuarioGerador);
         } else {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Formato de exportação não suportado: " + format);
+        }
+    }
+
+    private void gerarPdf(List<CadastroFamilia> relatorios,
+                          HttpServletResponse response,
+                          Long regionalId,
+                          String templateRelatorioFamilias,
+                          LocalDate inicio,
+                          LocalDate fim,
+                          String usuarioGerador) throws IOException {
+        if (regionalId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não foi possível identificar a regional para emissão do PDF.");
+        }
+
+        try {
+            Map<String, Object> parametros = new HashMap<>();
+            parametros.put("FILTRO_INICIO", inicio);
+            parametros.put("FILTRO_FIM", fim);
+            parametros.put("USUARIO_GERADOR", usuarioGerador);
+
+            byte[] pdf = jasperReportService.gerarRelatorioPdf(
+                    regionalId,
+                    templateRelatorioFamilias,
+                    relatorios,
+                    parametros
+            );
+
+            response.setContentType("application/pdf");
+            response.setHeader("Content-Disposition", "attachment; filename=relatorios_" + System.currentTimeMillis() + ".pdf");
+            response.getOutputStream().write(pdf);
+            response.getOutputStream().flush();
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage(), ex);
+        } catch (IllegalStateException ex) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Falha ao gerar PDF do relatório.", ex);
         }
     }
 

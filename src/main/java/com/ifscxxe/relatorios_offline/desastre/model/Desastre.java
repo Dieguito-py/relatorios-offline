@@ -5,8 +5,9 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import org.springframework.format.annotation.DateTimeFormat;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,11 +27,9 @@ public class Desastre {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String descricao;
 
-    @Column(name = "data_desastre_de", nullable = false)
-    private LocalDate dataDesastreDe;
-
-    @Column(name = "data_desastre_ate", nullable = false)
-    private LocalDate dataDesastreAte;
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    @Column(nullable = false)
+    private LocalDateTime dataDesastre;
 
     @OneToMany(mappedBy = "desastre")
     @ToString.Exclude

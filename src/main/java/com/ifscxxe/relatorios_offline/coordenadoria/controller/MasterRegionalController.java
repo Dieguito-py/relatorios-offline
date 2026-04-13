@@ -6,6 +6,7 @@ import com.ifscxxe.relatorios_offline.coordenadoria.repository.MunicipalReposito
 import com.ifscxxe.relatorios_offline.coordenadoria.repository.RegionalRepository;
 import com.ifscxxe.relatorios_offline.relatorio.repository.CadastroFamiliaRepository;
 import com.ifscxxe.relatorios_offline.usuario.repository.UsuarioRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,27 +21,37 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.nio.file.Path;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 @Controller
 @RequestMapping("/master/regionais")
 @PreAuthorize("hasRole('MASTER')")
 public class MasterRegionalController {
 
+    private static final String DEFAULT_TEMPLATE_RELATORIO_FAMILIAS = "relatorioFamilias.jrxml";
+
     private final RegionalRepository regionalRepository;
     private final MunicipalRepository municipalRepository;
     private final UsuarioRepository usuarioRepository;
     private final CadastroFamiliaRepository cadastroFamiliaRepository;
+    private final Path reportsBaseDir;
 
     public MasterRegionalController(RegionalRepository regionalRepository,
                                     MunicipalRepository municipalRepository,
                                     UsuarioRepository usuarioRepository,
-                                    CadastroFamiliaRepository cadastroFamiliaRepository) {
+                                    CadastroFamiliaRepository cadastroFamiliaRepository,
+                                    @Value("${app.reports.base-dir}") String reportsBaseDir) {
         this.regionalRepository = regionalRepository;
         this.municipalRepository = municipalRepository;
         this.usuarioRepository = usuarioRepository;
         this.cadastroFamiliaRepository = cadastroFamiliaRepository;
+        this.reportsBaseDir = Paths.get(reportsBaseDir).toAbsolutePath().normalize();
     }
 
     @GetMapping
@@ -79,14 +90,28 @@ public class MasterRegionalController {
     }
 
     @PostMapping
-    public String criarRegional(@RequestParam("nome") String nome) {
+    public String criarRegional(@RequestParam("nome") String nome,
+                                @RequestParam(value = "templateRelatorioFamilias", required = false) String templateRelatorioFamilias,
+                                RedirectAttributes redirectAttributes) {
         if (nome == null || nome.trim().isEmpty()) {
             return "redirect:/master/regionais?invalidName";
         }
 
         Regional regional = new Regional();
         regional.setNome(nome.trim());
+        try {
+            regional.setTemplateRelatorioFamilias(normalizeTemplateRelatorioFamilias(templateRelatorioFamilias));
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+            return "redirect:/master/regionais";
+        }
         regionalRepository.save(regional);
+
+        try {
+            ensureRegionalReportsDirectory(regional.getId());
+        } catch (IllegalStateException ex) {
+            redirectAttributes.addFlashAttribute("warning", ex.getMessage());
+        }
 
         return "redirect:/master/regionais?created";
     }
@@ -107,6 +132,7 @@ public class MasterRegionalController {
     @PostMapping("/{id}/editar")
     public String editarRegional(@PathVariable Long id,
                                  @RequestParam("nome") String nome,
+                                 @RequestParam(value = "templateRelatorioFamilias", required = false) String templateRelatorioFamilias,
                                  RedirectAttributes redirectAttributes) {
         Regional regional = regionalRepository.findById(id)
                 .orElse(null);
@@ -119,6 +145,12 @@ public class MasterRegionalController {
         }
 
         regional.setNome(nome.trim());
+        try {
+            regional.setTemplateRelatorioFamilias(normalizeTemplateRelatorioFamilias(templateRelatorioFamilias));
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+            return "redirect:/master/regionais/" + id + "/editar";
+        }
         regionalRepository.save(regional);
 
 
@@ -227,6 +259,51 @@ public class MasterRegionalController {
 
         regionalRepository.delete(regional);
         return "redirect:/master/regionais?regionalDeleted";
+    }
+
+    private String normalizeTemplateRelatorioFamilias(String rawPath) {
+        String value = (rawPath == null || rawPath.trim().isEmpty())
+                ? DEFAULT_TEMPLATE_RELATORIO_FAMILIAS
+                : rawPath.trim();
+
+        value = value.replace('\\', '/');
+        if (value.startsWith("/") || value.matches("^[a-zA-Z]:.*")) {
+            throw new IllegalArgumentException("Informe apenas caminho relativo para o template da regional.");
+        }
+
+        Path relative = Paths.get(value).normalize();
+        if (relative.isAbsolute()) {
+            throw new IllegalArgumentException("Informe apenas caminho relativo para o template da regional.");
+        }
+
+        for (Path part : relative) {
+            if ("..".equals(part.toString())) {
+                throw new IllegalArgumentException("O caminho do template da regional não pode conter '..'.");
+            }
+        }
+
+        String normalized = relative.toString().replace('\\', '/');
+        if (!normalized.toLowerCase(Locale.ROOT).endsWith(".jrxml")) {
+            throw new IllegalArgumentException("O template da regional deve ter extensão .jrxml.");
+        }
+
+        return normalized;
+    }
+
+    private void ensureRegionalReportsDirectory(Long regionalId) {
+        if (regionalId == null) {
+            throw new IllegalStateException("Regional criada, mas não foi possível identificar o ID para criar pasta Jasper.");
+        }
+
+        Path regionalReportsDir = reportsBaseDir.resolve(String.valueOf(regionalId)).normalize();
+        try {
+            Files.createDirectories(regionalReportsDir);
+        } catch (IOException | SecurityException ex) {
+            throw new IllegalStateException(
+                    "Regional criada, mas não foi possível criar a pasta Jasper em: " + regionalReportsDir,
+                    ex
+            );
+        }
     }
 }
 

@@ -8,6 +8,6 @@ import java.util.List;
 
 @Repository
 public interface DesastreRepository extends JpaRepository<Desastre, Long> {
-    List<Desastre> findAllByOrderByDataDesastreDeDescIdDesc();
+    List<Desastre> findAllByOrderByDataDesastreDescIdDesc();
 }
 

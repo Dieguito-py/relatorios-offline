@@ -50,7 +50,7 @@
                 <tr>
                     <th>Tipo</th>
                     <th>Descrição</th>
-                    <th>Período</th>
+                    <th>Data e hora</th>
                     <th>Ações</th>
                 </tr>
                 </thead>
@@ -61,11 +61,7 @@
                 <tr th:each="desastre : ${desastres}">
                     <td th:text="${desastre.tipoDesastre.descricao}">Tipo</td>
                     <td th:text="${desastre.descricao}">Descrição</td>
-                    <td>
-                        <span th:text="${#temporals.format(desastre.dataDesastreDe, 'dd/MM/yyyy')}">01/01/2026</span>
-                        -
-                        <span th:text="${#temporals.format(desastre.dataDesastreAte, 'dd/MM/yyyy')}">05/01/2026</span>
-                    </td>
+                    <td th:text="${#temporals.format(desastre.dataDesastre, 'dd/MM/yyyy HH:mm')}">01/01/2026 09:00</td>
                     <td class="d-flex gap-2">
                         <a th:href="@{|/desastres/${desastre.id}|}" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-eye"></i> Relatórios

@@ -15,22 +15,26 @@ import java.util.Optional;
 
 @Repository
 public interface CadastroFamiliaRepository extends JpaRepository<CadastroFamilia, Long> {
-    @EntityGraph(attributePaths = "usuario")
+    @EntityGraph(attributePaths = {"usuario", "municipal", "regional", "fotosResidencia"})
     List<CadastroFamilia> findByRegionalIdOrderByIdDesc(Long regionalId);
-    @EntityGraph(attributePaths = "usuario")
+    @EntityGraph(attributePaths = {"usuario", "municipal", "regional", "fotosResidencia"})
     List<CadastroFamilia> findByRegionalIdAndDataDesastreBetweenOrderByDataDesastreDesc(Long regionalId, LocalDateTime inicio, LocalDateTime fim);
     @EntityGraph(attributePaths = "fotosResidencia")
     Optional<CadastroFamilia> findByIdAndRegionalId(Long id, Long regionalId);
     List<CadastroFamilia> findByUsuarioIdOrderByDataDesastreDesc(Long usuarioId);
+    @EntityGraph(attributePaths = {"usuario", "municipal", "regional", "fotosResidencia"})
     List<CadastroFamilia> findByDesastreIdOrderByDataDesastreDesc(Long desastreId);
+    @EntityGraph(attributePaths = {"usuario", "municipal", "regional", "fotosResidencia"})
+    List<CadastroFamilia> findByDesastreIdAndRegionalIdOrderByDataDesastreDesc(Long desastreId, Long regionalId);
     boolean existsByRegionalId(Long regionalId);
     boolean existsByMunicipalId(Long municipalId);
-    @EntityGraph(attributePaths = "usuario")
+    @EntityGraph(attributePaths = {"usuario", "municipal", "regional", "fotosResidencia"})
     List<CadastroFamilia> findByMunicipalIdOrderByIdDesc(Long municipalId);
-    @EntityGraph(attributePaths = "usuario")
+    @EntityGraph(attributePaths = {"usuario", "municipal", "regional", "fotosResidencia"})
     List<CadastroFamilia> findByMunicipalIdAndDataDesastreBetweenOrderByDataDesastreDesc(Long municipalId, LocalDateTime inicio, LocalDateTime fim);
     @EntityGraph(attributePaths = "fotosResidencia")
     Optional<CadastroFamilia> findByIdAndMunicipalId(Long id, Long municipalId);
+    @EntityGraph(attributePaths = {"usuario", "municipal", "regional", "fotosResidencia"})
     List<CadastroFamilia> findByDesastreIdAndMunicipalIdOrderByDataDesastreDesc(Long desastreId, Long municipalId);
 
     @Query("""
