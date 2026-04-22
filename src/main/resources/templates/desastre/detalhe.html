@@ -6,7 +6,44 @@
     <title>Detalhes do Desastre</title>
 </head>
 <body>
-<th:block th:fragment="custom-styles"></th:block>
+<th:block th:fragment="custom-styles">
+    <style>
+        .resumo-kpi {
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 0.75rem;
+            background: #f8f9fa;
+        }
+
+        .resumo-kpi .valor {
+            font-size: 1.35rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .acoes-formularios {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 0.75rem;
+            width: 100%;
+        }
+
+        .acoes-formularios .btn {
+            display: inline-flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            border-radius: 0.75rem;
+            padding: 0.65rem 0.9rem;
+            white-space: normal;
+        }
+
+        .acoes-formularios .badge {
+            border-radius: 999px;
+        }
+    </style>
+</th:block>
 
 <th:block th:fragment="content">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -19,7 +56,7 @@
                 <i class="bi bi-arrow-left"></i> Voltar
             </a>
             <a th:href="@{|/desastres/${desastre.id}/editar|}" class="btn btn-primary">
-                <i class="bi bi-pencil"></i> Editar desastre
+                <i class="bi bi-pencil"></i> Editar
             </a>
         </div>
     </div>
@@ -28,8 +65,8 @@
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-md-4">
-                    <label class="form-label text-muted">Tipo</label>
-                    <div th:text="${desastre.tipoDesastre.descricao}">Tipo</div>
+                    <label class="form-label text-muted">COBRADE</label>
+                    <div th:text="${desastre.tipoDesastre.descricao}">COBRADE</div>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label text-muted">Data e hora</label>
@@ -44,13 +81,130 @@
     </div>
 
     <div class="card shadow-sm mb-4">
-        <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div class="card-body">
+            <h2 class="h5 mb-3">Resumo do desastre</h2>
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <div class="resumo-kpi">
+                        <div class="text-muted small">Total de afetados</div>
+                        <div class="valor" th:text="${totalAfetados} ?: 0">0</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="resumo-kpi">
+                        <div class="text-muted small">Total de feridos</div>
+                        <div class="valor" th:text="${totalFeridos} ?: 0">0</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="resumo-kpi">
+                        <div class="text-muted small">Total de desaparecidos</div>
+                        <div class="valor" th:text="${totalDesaparecidos} ?: 0">0</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="resumo-kpi">
+                        <div class="text-muted small">Total de obitos</div>
+                        <div class="valor" th:text="${totalObitos} ?: 0">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="h6 mb-2">Quantidade de suprimento por item</h3>
+            <div class="row g-3">
+                <div class="col-12" th:if="${totaisSuprimentos == null || #maps.isEmpty(totaisSuprimentos)}">
+                    <div class="text-muted text-center py-3">Sem dados de suprimento para os relatórios vinculados.</div>
+                </div>
+
+                <div class="col-md-6" th:unless="${totaisSuprimentos == null || #maps.isEmpty(totaisSuprimentos)}">
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th class="text-end">Quantidade</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>Agua potavel 5L</td>
+                                <td class="text-end fw-semibold" th:text="${totaisSuprimentos['Agua potavel 5L'] != null ? totaisSuprimentos['Agua potavel 5L'] : 0}">0</td>
+                            </tr>
+                            <tr>
+                                <td>Colchoes solteiro</td>
+                                <td class="text-end fw-semibold" th:text="${totaisSuprimentos['Colchoes solteiro'] != null ? totaisSuprimentos['Colchoes solteiro'] : 0}">0</td>
+                            </tr>
+                            <tr>
+                                <td>Colchoes casal</td>
+                                <td class="text-end fw-semibold" th:text="${totaisSuprimentos['Colchoes casal'] != null ? totaisSuprimentos['Colchoes casal'] : 0}">0</td>
+                            </tr>
+                            <tr>
+                                <td>Cestas basicas</td>
+                                <td class="text-end fw-semibold" th:text="${totaisSuprimentos['Cestas basicas'] != null ? totaisSuprimentos['Cestas basicas'] : 0}">0</td>
+                            </tr>
+                            <tr>
+                                <td>Kit higiene pessoal</td>
+                                <td class="text-end fw-semibold" th:text="${totaisSuprimentos['Kit higiene pessoal'] != null ? totaisSuprimentos['Kit higiene pessoal'] : 0}">0</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="col-md-6" th:unless="${totaisSuprimentos == null || #maps.isEmpty(totaisSuprimentos)}">
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th class="text-end">Quantidade</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>Kit limpeza</td>
+                                <td class="text-end fw-semibold" th:text="${totaisSuprimentos['Kit limpeza'] != null ? totaisSuprimentos['Kit limpeza'] : 0}">0</td>
+                            </tr>
+                            <tr>
+                                <td>Moveis</td>
+                                <td class="text-end fw-semibold" th:text="${totaisSuprimentos['Moveis'] != null ? totaisSuprimentos['Moveis'] : 0}">0</td>
+                            </tr>
+                            <tr>
+                                <td>Telhas 6mm</td>
+                                <td class="text-end fw-semibold" th:text="${totaisSuprimentos['Telhas 6mm'] != null ? totaisSuprimentos['Telhas 6mm'] : 0}">0</td>
+                            </tr>
+                            <tr>
+                                <td>Telhas 4mm</td>
+                                <td class="text-end fw-semibold" th:text="${totaisSuprimentos['Telhas 4mm'] != null ? totaisSuprimentos['Telhas 4mm'] : 0}">0</td>
+                            </tr>
+                            <tr>
+                                <td>Roupas</td>
+                                <td class="text-end fw-semibold" th:text="${totaisSuprimentos['Roupas'] != null ? totaisSuprimentos['Roupas'] : 0}">0</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
             <div>
                 <h2 class="h5 mb-1">Formulários</h2>
+                <p class="text-muted mb-3" th:text="|${#lists.size(relatoriosVinculados)} relatório(s) vinculados para geração.|">
+                    0 relatório(s) vinculados para geração.
+                </p>
             </div>
-            <div class="btn-group" role="group" aria-label="Ações de formulários">
-                <a th:href="@{|/desastres/${desastre.id}/exportar-familias|}" class="btn btn-outline-danger">
-                    <i class="bi bi-file-earmark-pdf"></i> Relatório famílias atingidas
+            <div class="acoes-formularios" role="group" aria-label="Ações de formulários">
+                <a th:href="@{|/desastres/${desastre.id}/exportar-familias|}" class="btn btn-danger" th:classappend="${#lists.isEmpty(relatoriosVinculados)} ? ' disabled' : ''" th:attr="aria-disabled=${#lists.isEmpty(relatoriosVinculados)}">
+                    <span><i class="bi bi-file-earmark-pdf"></i> Famílias atingidas</span>
+                    <span class="badge text-bg-light" th:text="${#lists.size(relatoriosVinculados)}">0</span>
+                </a>
+                <a href="/relatorios/consultarRelatorios" class="btn btn-outline-secondary">
+                    <span><i class="bi bi-ui-checks-grid"></i> Consultar formulários</span>
+                    <i class="bi bi-arrow-right-short"></i>
                 </a>
             </div>
         </div>
@@ -62,10 +216,7 @@
                 <h2 class="h5 mb-0">Relatórios vinculados</h2>
                 <div class="btn-group" role="group" aria-label="Ações de relatórios vinculados">
                     <a th:href="@{|/desastres/${desastre.id}/vinculos|}" class="btn btn-outline-primary">
-                        <i class="bi bi-link-45deg"></i> Gerenciar vínculos
-                    </a>
-                    <a href="/relatorios/consultarRelatorios" class="btn btn-outline-secondary">
-                        <i class="bi bi-ui-checks-grid"></i> Consultar formulários
+                        <i class="bi bi-link-45deg"></i> Gerenciar formulários
                     </a>
                 </div>
             </div>
@@ -76,7 +227,7 @@
                         <th>Data</th>
                         <th>Nome atingido</th>
                         <th>Cidade</th>
-                        <th>Ação</th>
+                        <th class="text-end">Ação</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -87,16 +238,18 @@
                         <td th:text="${#temporals.format(relatorio.dataDesastre, 'dd/MM/yyyy HH:mm')}">01/01/2026 09:00</td>
                         <td th:text="${relatorio.nomeAtingido}">Nome</td>
                         <td th:text="${relatorio.cidadeAtingido}">Cidade</td>
-                        <td class="d-flex gap-2">
-                            <a th:href="@{/relatorios/{id}(id=${relatorio.id})}" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-eye"></i> Ver relatório
+                        <td class="text-end">
+                            <div class="d-inline-flex gap-2">
+                            <a th:href="@{/relatorios/{id}(id=${relatorio.id})}" class="btn btn-sm btn-outline-primary" title="Visualizar relatório" aria-label="Visualizar relatório">
+                                <i class="bi bi-eye"></i>
                             </a>
                             <form th:action="@{|/desastres/${desastre.id}/desvincular|}" method="post" class="d-inline">
                                 <input type="hidden" name="relatorioId" th:value="${relatorio.id}">
-                                <button type="submit" class="btn btn-sm btn-outline-danger">
-                                    <i class="bi bi-link-45deg"></i> Desvincular
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Desvincular relatório" aria-label="Desvincular relatório">
+                                    <i class="bi bi-link-45deg"></i>
                                 </button>
                             </form>
+                            </div>
                         </td>
                     </tr>
                     </tbody>

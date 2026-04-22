@@ -22,35 +22,21 @@
             padding: 1.5rem;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
-
-        table thead {
-            background-color: var(--primary-color);
-            color: white;
-        }
     </style>
 </th:block>
 
 <th:block th:fragment="content">
+    <div th:if="${param.deleted}" class="alert alert-success" role="alert">
+        Relatório excluído com sucesso.
+    </div>
+    <div th:if="${param.invalidRelatorio}" class="alert alert-danger" role="alert">
+        Relatório não encontrado ou fora do seu escopo de acesso.
+    </div>
+
     <div class="filter-card">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="mb-0"><i class="bi bi-search"></i> Consultar Relatórios</h2>
-            <div class="btn-group" role="group">
-                <form th:action="@{/relatorios/exportar}" method="get" class="d-inline">
-                    <input type="hidden" name="inicio" th:value="${inicio}">
-                    <input type="hidden" name="fim" th:value="${fim}">
-                    <input type="hidden" name="format" value="pdf">
-                    <button type="submit" class="btn btn-outline-danger">
-                        <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
-                    </button>
-                </form>
-                <form th:action="@{/relatorios/exportar}" method="get" class="d-inline ms-2">
-                    <input type="hidden" name="inicio" th:value="${inicio}">
-                    <input type="hidden" name="fim" th:value="${fim}">
-                    <input type="hidden" name="format" value="xlsx">
-                    <button type="submit" class="btn btn-outline-success">
-                        <i class="bi bi-file-earmark-spreadsheet"></i> Exportar XLSX
-                    </button>
-                </form>
+            <div>
                 <a href="/home"
                    class="btn btn-outline-secondary ms-2"><i class="bi bi-arrow-left"></i> Voltar</a>
             </div>
@@ -104,10 +90,16 @@
                     <td th:text="${relatorio.cidadeAtingido}">Cidade</td>
                     <td th:text="${relatorio.moradia}">Moradia</td>
                     <td th:text="${relatorio.danoResidencia}">Dano</td>
-                    <td>
+                    <td class="d-flex gap-2 flex-wrap">
                         <a th:href="@{/relatorios/{id}(id=${relatorio.id})}" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-eye"></i> Ver detalhes
                         </a>
+                        <form th:action="@{/relatorios/{id}/excluir(id=${relatorio.id})}" method="post" class="d-inline"
+                              onsubmit="return confirm('Tem certeza que deseja excluir este relatório?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i> Excluir
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 </tbody>

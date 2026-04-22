@@ -17,6 +17,27 @@ public class Municipal {
 
     private String nome;
 
+    private String endereco;
+
+    @Column(length = 20)
+    private String cnpj;
+
+    private String emailOrgaoProponente;
+
+    @Column(length = 30)
+    private String telefoneOrgaoProponente;
+
+    private String emailCompdec;
+
+    @Column(length = 30)
+    private String telefoneCompdec;
+
+    @Column(length = 30)
+    private String celularCompdec;
+
+    @ManyToOne
+    private Usuario coordenadorCompdec;
+
     @ManyToOne
     @JoinColumn(name = "regional_id")
     private Regional regional;

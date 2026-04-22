@@ -27,6 +27,12 @@
     <div th:if="${param.invalidDesastre}" class="alert alert-danger" role="alert">
         Desastre não encontrado.
     </div>
+    <div th:if="${param.deleted}" class="alert alert-success" role="alert">
+        Desastre excluído com sucesso.
+    </div>
+    <div th:if="${param.deleteBlocked}" class="alert alert-warning" role="alert">
+        Não é possível excluir um desastre com relatórios vinculados.
+    </div>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -48,7 +54,7 @@
             <table class="table align-middle">
                 <thead>
                 <tr>
-                    <th>Tipo</th>
+                    <th>COBRADE</th>
                     <th>Descrição</th>
                     <th>Data e hora</th>
                     <th>Ações</th>
@@ -62,13 +68,19 @@
                     <td th:text="${desastre.tipoDesastre.descricao}">Tipo</td>
                     <td th:text="${desastre.descricao}">Descrição</td>
                     <td th:text="${#temporals.format(desastre.dataDesastre, 'dd/MM/yyyy HH:mm')}">01/01/2026 09:00</td>
-                    <td class="d-flex gap-2">
+                    <td class="d-flex gap-2 flex-wrap">
                         <a th:href="@{|/desastres/${desastre.id}|}" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-eye"></i> Relatórios
+                            <i class="bi bi-eye"></i> Visualizar
                         </a>
                         <a th:href="@{|/desastres/${desastre.id}/editar|}" class="btn btn-sm btn-outline-secondary">
                             <i class="bi bi-pencil"></i> Editar
                         </a>
+                        <form th:action="@{|/desastres/${desastre.id}/excluir|}" method="post" class="d-inline"
+                              onsubmit="return confirm('Tem certeza que deseja excluir este desastre?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i> Excluir
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 </tbody>

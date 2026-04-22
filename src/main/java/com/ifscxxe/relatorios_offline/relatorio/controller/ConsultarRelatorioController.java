@@ -7,11 +7,13 @@ import com.ifscxxe.relatorios_offline.usuario.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -41,6 +43,12 @@ public class ConsultarRelatorioController {
             @RequestParam(value = "fim", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim
     ) {
+        if (inicio != null && fim != null && inicio.isAfter(fim)) {
+            LocalDate temp = inicio;
+            inicio = fim;
+            fim = temp;
+        }
+
         List<CadastroFamilia> relatorios = Collections.emptyList();
         if (authentication != null) {
             Usuario usuario = usuarioRepository.findByUsername(authentication.getName()).orElse(null);
@@ -80,6 +88,21 @@ public class ConsultarRelatorioController {
                             fimDateTime
                     );
                 }
+            } else if (hasAuthority(authentication, "ROLE_MASTER")) {
+                if (inicio == null && fim == null) {
+                    relatorios = cadastroFamiliaRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
+                } else {
+                    LocalDateTime inicioDateTime = inicio != null
+                            ? inicio.atStartOfDay()
+                            : LocalDate.of(1970, Month.JANUARY, 1).atStartOfDay();
+                    LocalDateTime fimDateTime = fim != null
+                            ? fim.atTime(LocalTime.MAX)
+                            : LocalDate.of(9999, Month.DECEMBER, 31).atTime(LocalTime.MAX);
+                    relatorios = cadastroFamiliaRepository.findByDataDesastreBetweenOrderByDataDesastreDesc(
+                            inicioDateTime,
+                            fimDateTime
+                    );
+                }
             }
         }
         model.addAttribute("relatorios", relatorios);
@@ -100,22 +123,7 @@ public class ConsultarRelatorioController {
         }
 
         Usuario usuario = usuarioOpt.get();
-        boolean isMunicipal = isMunicipal(authentication);
-        Optional<CadastroFamilia> relatorioOpt;
-
-        if (isMunicipal) {
-            if (usuario.getMunicipal() == null) {
-                model.addAttribute("error", "Usuário sem municipal associada.");
-                return "redirect:/relatorios/consultarRelatorios";
-            }
-            relatorioOpt = cadastroFamiliaRepository.findByIdAndMunicipalId(id, usuario.getMunicipal().getId());
-        } else {
-            if (usuario.getRegional() == null) {
-                model.addAttribute("error", "Usuário sem regional associada.");
-                return "redirect:/relatorios/consultarRelatorios";
-            }
-            relatorioOpt = cadastroFamiliaRepository.findByIdAndRegionalId(id, usuario.getRegional().getId());
-        }
+        Optional<CadastroFamilia> relatorioOpt = buscarRelatorioNoEscopo(id, usuario, authentication);
 
         if (relatorioOpt.isEmpty()) {
             model.addAttribute("error", "Relatório não encontrado ou indisponível.");
@@ -141,6 +149,26 @@ public class ConsultarRelatorioController {
         return "relatorio/detalheRelatorio";
     }
 
+    @PostMapping("/{id:\\d+}/excluir")
+    public String excluir(@PathVariable Long id, Authentication authentication) {
+        if (authentication == null) {
+            return "redirect:/login";
+        }
+
+        Optional<Usuario> usuarioOpt = usuarioRepository.findByUsername(authentication.getName());
+        if (usuarioOpt.isEmpty()) {
+            return "redirect:/relatorios/consultarRelatorios?invalidRelatorio";
+        }
+
+        Optional<CadastroFamilia> relatorioOpt = buscarRelatorioNoEscopo(id, usuarioOpt.get(), authentication);
+        if (relatorioOpt.isEmpty()) {
+            return "redirect:/relatorios/consultarRelatorios?invalidRelatorio";
+        }
+
+        cadastroFamiliaRepository.delete(relatorioOpt.get());
+        return "redirect:/relatorios/consultarRelatorios?deleted";
+    }
+
 
     private String normalizarFotoResidenciaUrl(String fotoResidencia) {
         if (!StringUtils.hasText(fotoResidencia)) {
@@ -158,5 +186,29 @@ public class ConsultarRelatorioController {
     private boolean isMunicipal(Authentication authentication) {
         return authentication != null && authentication.getAuthorities().stream()
                 .anyMatch(granted -> "ROLE_MUNICIPAL".equals(granted.getAuthority()));
+    }
+
+    private boolean hasAuthority(Authentication authentication, String authority) {
+        return authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(granted -> authority.equals(granted.getAuthority()));
+    }
+
+    private Optional<CadastroFamilia> buscarRelatorioNoEscopo(Long id, Usuario usuario, Authentication authentication) {
+        if (hasAuthority(authentication, "ROLE_MUNICIPAL")) {
+            if (usuario.getMunicipal() == null) {
+                return Optional.empty();
+            }
+            return cadastroFamiliaRepository.findByIdAndMunicipalId(id, usuario.getMunicipal().getId());
+        }
+        if (hasAuthority(authentication, "ROLE_REGIONAL")) {
+            if (usuario.getRegional() == null) {
+                return Optional.empty();
+            }
+            return cadastroFamiliaRepository.findByIdAndRegionalId(id, usuario.getRegional().getId());
+        }
+        if (hasAuthority(authentication, "ROLE_MASTER")) {
+            return cadastroFamiliaRepository.findById(id);
+        }
+        return Optional.empty();
     }
 }

@@ -32,10 +32,13 @@ public interface CadastroFamiliaRepository extends JpaRepository<CadastroFamilia
     List<CadastroFamilia> findByMunicipalIdOrderByIdDesc(Long municipalId);
     @EntityGraph(attributePaths = {"usuario", "municipal", "regional", "fotosResidencia"})
     List<CadastroFamilia> findByMunicipalIdAndDataDesastreBetweenOrderByDataDesastreDesc(Long municipalId, LocalDateTime inicio, LocalDateTime fim);
+    @EntityGraph(attributePaths = {"usuario", "municipal", "regional", "fotosResidencia"})
+    List<CadastroFamilia> findByDataDesastreBetweenOrderByDataDesastreDesc(LocalDateTime inicio, LocalDateTime fim);
     @EntityGraph(attributePaths = "fotosResidencia")
     Optional<CadastroFamilia> findByIdAndMunicipalId(Long id, Long municipalId);
     @EntityGraph(attributePaths = {"usuario", "municipal", "regional", "fotosResidencia"})
     List<CadastroFamilia> findByDesastreIdAndMunicipalIdOrderByDataDesastreDesc(Long desastreId, Long municipalId);
+    boolean existsByDesastreId(Long desastreId);
 
     @Query("""
             select c from CadastroFamilia c

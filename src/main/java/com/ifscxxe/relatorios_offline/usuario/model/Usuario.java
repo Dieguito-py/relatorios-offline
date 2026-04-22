@@ -30,6 +30,9 @@ public class Usuario {
     @Column(nullable = false, length = 200)
     private String password;
 
+    @Column(nullable = false)
+    private Boolean ativo = true;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "usuario_roles", joinColumns = @JoinColumn(name = "usuario_id"))
     @Enumerated(EnumType.STRING)

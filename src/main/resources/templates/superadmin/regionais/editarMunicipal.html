@@ -6,7 +6,25 @@
     <title>Editar Municipal</title>
 </head>
 <body>
-<th:block th:fragment="custom-styles"></th:block>
+<th:block th:fragment="custom-styles">
+    <style>
+        .section-card {
+            border: 1px solid #e9ecef;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            background: #fafbfc;
+        }
+
+        .section-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+    </style>
+</th:block>
 
 <th:block th:fragment="content">
 
@@ -22,13 +40,16 @@
 
     <div class="card shadow-sm">
         <div class="card-body">
-            <form th:action="@{|/master/regionais/municipais/${municipal.id}/editar|}" method="post">
-                <div class="mb-3">
+            <form th:action="@{|/master/regionais/municipais/${municipal.id}/editar|}" method="post" class="row g-3">
+                <div class="col-12 section-card">
+                    <div class="section-title">Dados Gerais</div>
+                    <div class="row g-3">
+                <div class="col-md-6">
                     <label class="form-label" for="nome">Nome do municipal</label>
                     <input id="nome" name="nome" class="form-control" required maxlength="100" th:value="${municipal.nome}">
                 </div>
 
-                <div class="mb-3">
+                <div class="col-md-6">
                     <label class="form-label" for="regionalId">Regional</label>
                     <select id="regionalId" name="regionalId" class="form-select" required>
                         <option value="" disabled>Selecione</option>
@@ -40,14 +61,116 @@
                         </option>
                     </select>
                 </div>
+                    </div>
+                </div>
 
-                <button type="submit" class="btn btn-primary">Salvar alterações</button>
+                <div class="col-12 section-card">
+                    <div class="section-title">Contato e Documento</div>
+                    <div class="row g-3">
+                <div class="col-md-12">
+                    <label class="form-label" for="endereco">Endereco</label>
+                    <input id="endereco" name="endereco" class="form-control" maxlength="255" th:value="${municipal.endereco}" placeholder="Rua, numero, bairro">
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label" for="cnpj">CNPJ</label>
+                    <input id="cnpj" name="cnpj" class="form-control js-cnpj" maxlength="18" inputmode="numeric" th:value="${municipal.cnpj}" placeholder="00.000.000/0000-00">
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label" for="emailOrgaoProponente">E-mail do orgao proponente</label>
+                    <input id="emailOrgaoProponente" name="emailOrgaoProponente" type="email" class="form-control" maxlength="255" th:value="${municipal.emailOrgaoProponente}">
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label" for="telefoneOrgaoProponente">Telefone do orgao proponente</label>
+                    <input id="telefoneOrgaoProponente" name="telefoneOrgaoProponente" class="form-control js-phone" maxlength="15" inputmode="numeric" th:value="${municipal.telefoneOrgaoProponente}" placeholder="(00) 0000-0000">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="emailCompdec">E-mail COMPDEC</label>
+                    <input id="emailCompdec" name="emailCompdec" type="email" class="form-control" maxlength="255" th:value="${municipal.emailCompdec}">
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label" for="telefoneCompdec">Telefone COMPDEC</label>
+                    <input id="telefoneCompdec" name="telefoneCompdec" class="form-control js-phone" maxlength="15" inputmode="numeric" th:value="${municipal.telefoneCompdec}" placeholder="(00) 0000-0000">
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label" for="celularCompdec">Celular COMPDEC</label>
+                    <input id="celularCompdec" name="celularCompdec" class="form-control js-mobile" maxlength="15" inputmode="numeric" th:value="${municipal.celularCompdec}" placeholder="(00) 00000-0000">
+                </div>
+                    </div>
+                </div>
+
+                <div class="col-12 section-card">
+                    <div class="section-title">Coordenacao COMPDEC</div>
+                    <label class="form-label" for="coordenadorCompdecId">Usuario coordenador</label>
+                    <select id="coordenadorCompdecId" name="coordenadorCompdecId" class="form-select">
+                        <option value="">Sem coordenador vinculado</option>
+                        <option th:if="${#lists.isEmpty(usuariosMunicipais)}" value="" disabled>Nenhum usuario disponivel para vincular</option>
+                        <option th:each="usuario : ${usuariosMunicipais}"
+                                th:value="${usuario.id}"
+                                th:selected="${municipal.coordenadorCompdec != null and municipal.coordenadorCompdec.id == usuario.id}"
+                                th:text="${(usuario.nome != null and !#strings.isEmpty(usuario.nome)) ? usuario.nome + ' (' + usuario.username + ')' : usuario.username}">Usuario</option>
+                    </select>
+                    <small class="text-muted">Apenas usuarios vinculados a esta municipal podem ser definidos como coordenador.</small>
+                </div>
+
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Salvar alterações</button>
+                </div>
             </form>
         </div>
     </div>
 </th:block>
 
-<th:block th:fragment="custom-scripts"></th:block>
+<th:block th:fragment="custom-scripts">
+    <script>
+        (function () {
+            function onlyDigits(value) {
+                return (value || "").replace(/\D/g, "");
+            }
+
+            function maskCnpj(value) {
+                var d = onlyDigits(value).slice(0, 14);
+                if (d.length <= 2) return d;
+                if (d.length <= 5) return d.slice(0, 2) + "." + d.slice(2);
+                if (d.length <= 8) return d.slice(0, 2) + "." + d.slice(2, 5) + "." + d.slice(5);
+                if (d.length <= 12) return d.slice(0, 2) + "." + d.slice(2, 5) + "." + d.slice(5, 8) + "/" + d.slice(8);
+                return d.slice(0, 2) + "." + d.slice(2, 5) + "." + d.slice(5, 8) + "/" + d.slice(8, 12) + "-" + d.slice(12);
+            }
+
+            function maskPhone(value) {
+                var d = onlyDigits(value).slice(0, 10);
+                if (d.length <= 2) return d;
+                if (d.length <= 6) return "(" + d.slice(0, 2) + ") " + d.slice(2);
+                return "(" + d.slice(0, 2) + ") " + d.slice(2, 6) + "-" + d.slice(6);
+            }
+
+            function maskMobile(value) {
+                var d = onlyDigits(value).slice(0, 11);
+                if (d.length <= 2) return d;
+                if (d.length <= 7) return "(" + d.slice(0, 2) + ") " + d.slice(2);
+                return "(" + d.slice(0, 2) + ") " + d.slice(2, 7) + "-" + d.slice(7);
+            }
+
+            function bindMask(selector, formatter) {
+                document.querySelectorAll(selector).forEach(function (input) {
+                    input.addEventListener("input", function () {
+                        input.value = formatter(input.value);
+                    });
+                    input.value = formatter(input.value);
+                });
+            }
+
+            bindMask(".js-cnpj", maskCnpj);
+            bindMask(".js-phone", maskPhone);
+            bindMask(".js-mobile", maskMobile);
+        })();
+    </script>
+</th:block>
 </body>
 </html>
 

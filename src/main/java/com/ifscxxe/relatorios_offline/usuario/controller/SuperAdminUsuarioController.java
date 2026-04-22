@@ -123,9 +123,42 @@ public class SuperAdminUsuarioController {
         usuario.setRoles(EnumSet.copyOf(usuario.getRoles()));
         usuario.setMunicipal(municipal);
         usuario.setRegional(municipal.getRegional());
+        usuario.setAtivo(true);
 
         usuarioRepository.save(usuario);
         return "redirect:/superadmin/usuarios?created";
+    }
+
+    @PostMapping("/{id}/desativar")
+    public String desativarUsuario(@PathVariable Long id, Authentication authentication) {
+        Usuario usuarioAlvo = usuarioRepository.findById(id)
+                .orElse(null);
+        if (usuarioAlvo == null) {
+            return "redirect:/superadmin/usuarios?invalidUser";
+        }
+
+        Usuario usuarioLogado = obterUsuarioLogado(authentication);
+        boolean isMaster = hasRole(authentication, "ROLE_MASTER");
+
+        if (!isMaster) {
+            Long regionalDoLogado = usuarioLogado.getRegional() != null ? usuarioLogado.getRegional().getId() : null;
+            Long regionalDoAlvo = usuarioAlvo.getRegional() != null ? usuarioAlvo.getRegional().getId() : null;
+            if (regionalDoLogado == null || !regionalDoLogado.equals(regionalDoAlvo)) {
+                return "redirect:/superadmin/usuarios?forbidden";
+            }
+        }
+
+        if (usuarioLogado.getId().equals(usuarioAlvo.getId())) {
+            return "redirect:/superadmin/usuarios?cannotDeactivateSelf";
+        }
+
+        if (Boolean.FALSE.equals(usuarioAlvo.getAtivo())) {
+            return "redirect:/superadmin/usuarios?alreadyInactive";
+        }
+
+        usuarioAlvo.setAtivo(false);
+        usuarioRepository.save(usuarioAlvo);
+        return "redirect:/superadmin/usuarios?deactivated";
     }
 
     @GetMapping("/{id}/relatorios")

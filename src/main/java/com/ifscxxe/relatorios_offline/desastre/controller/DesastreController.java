@@ -6,6 +6,7 @@ import com.ifscxxe.relatorios_offline.desastre.repository.DesastreRepository;
 import com.ifscxxe.relatorios_offline.relatorio.model.CadastroFamilia;
 import com.ifscxxe.relatorios_offline.relatorio.repository.CadastroFamiliaRepository;
 import com.ifscxxe.relatorios_offline.relatorio.service.JasperReportService;
+import com.ifscxxe.relatorios_offline.relatorio.service.RelatorioResumoService;
 import com.ifscxxe.relatorios_offline.usuario.model.Usuario;
 import com.ifscxxe.relatorios_offline.usuario.repository.UsuarioRepository;
 import jakarta.servlet.http.HttpServletResponse;
@@ -48,15 +49,18 @@ public class DesastreController {
     private final CadastroFamiliaRepository cadastroFamiliaRepository;
     private final UsuarioRepository usuarioRepository;
     private final JasperReportService jasperReportService;
+    private final RelatorioResumoService relatorioResumoService;
 
     public DesastreController(DesastreRepository desastreRepository,
                               CadastroFamiliaRepository cadastroFamiliaRepository,
                               UsuarioRepository usuarioRepository,
-                              JasperReportService jasperReportService) {
+                              JasperReportService jasperReportService,
+                              RelatorioResumoService relatorioResumoService) {
         this.desastreRepository = desastreRepository;
         this.cadastroFamiliaRepository = cadastroFamiliaRepository;
         this.usuarioRepository = usuarioRepository;
         this.jasperReportService = jasperReportService;
+        this.relatorioResumoService = relatorioResumoService;
     }
 
     @GetMapping
@@ -100,6 +104,11 @@ public class DesastreController {
 
         model.addAttribute("desastre", desastre);
         model.addAttribute("relatoriosVinculados", relatoriosVinculados);
+        model.addAttribute("totalAfetados", relatorioResumoService.calcularTotalVitimas(relatoriosVinculados));
+        model.addAttribute("totalFeridos", relatorioResumoService.calcularTotalFeridos(relatoriosVinculados));
+        model.addAttribute("totalDesaparecidos", relatorioResumoService.calcularTotalDesaparecidos(relatoriosVinculados));
+        model.addAttribute("totalObitos", relatorioResumoService.calcularTotalObitos(relatoriosVinculados));
+        model.addAttribute("totaisSuprimentos", relatorioResumoService.calcularTotaisSuprimentos(relatoriosVinculados));
         model.addAttribute("pageTitle", "Detalhes do Desastre");
         return "desastre/detalhe";
     }
@@ -121,6 +130,7 @@ public class DesastreController {
         String usuarioGerador = resolveUsuarioGerador(authentication, usuario);
         List<CadastroFamilia> relatorios;
         Long regionalId;
+        String regionalNome;
         String templateRelatorioFamilias;
 
         if (hasAuthority(authentication, "ROLE_MUNICIPAL")) {
@@ -128,6 +138,7 @@ public class DesastreController {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não foi possível identificar a regional do usuário municipal.");
             }
             regionalId = usuario.getMunicipal().getRegional().getId();
+            regionalNome = usuario.getMunicipal().getRegional().getNome();
             templateRelatorioFamilias = usuario.getMunicipal().getRegional().getTemplateRelatorioFamilias();
             relatorios = cadastroFamiliaRepository.findByDesastreIdAndMunicipalIdOrderByDataDesastreDesc(id, usuario.getMunicipal().getId());
         } else if (hasAuthority(authentication, "ROLE_REGIONAL")) {
@@ -135,6 +146,7 @@ public class DesastreController {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Não foi possível identificar a regional do usuário.");
             }
             regionalId = usuario.getRegional().getId();
+            regionalNome = usuario.getRegional().getNome();
             templateRelatorioFamilias = usuario.getRegional().getTemplateRelatorioFamilias();
             relatorios = cadastroFamiliaRepository.findByDesastreIdAndRegionalIdOrderByDataDesastreDesc(id, regionalId);
         } else {
@@ -158,10 +170,12 @@ public class DesastreController {
             }
 
             regionalId = regionaisEncontradas.iterator().next();
+            regionalNome = null;
             templateRelatorioFamilias = null;
             for (CadastroFamilia relatorio : relatorios) {
                 if (relatorio.getRegional() != null
                         && regionalId.equals(relatorio.getRegional().getId())) {
+                    regionalNome = relatorio.getRegional().getNome();
                     templateRelatorioFamilias = relatorio.getRegional().getTemplateRelatorioFamilias();
                     break;
                 }
@@ -181,6 +195,8 @@ public class DesastreController {
             parametrosAdicionais.put("FILTRO_INICIO", desastre.getDataDesastre().toLocalDate());
             parametrosAdicionais.put("FILTRO_FIM", desastre.getDataDesastre().toLocalDate());
             parametrosAdicionais.put("USUARIO_GERADOR", usuarioGerador);
+            parametrosAdicionais.put("REGIONAL_NOME", regionalNome);
+            parametrosAdicionais.putAll(relatorioResumoService.montarParametrosResumo(relatorios));
 
             byte[] pdf = jasperReportService.gerarRelatorioPdf(
                     regionalId,
@@ -349,6 +365,21 @@ public class DesastreController {
         desastreRepository.save(desastre);
 
         return "redirect:/desastres?updated";
+    }
+
+    @PostMapping("/{id}/excluir")
+    public String excluir(@PathVariable Long id) {
+        Desastre desastre = desastreRepository.findById(id).orElse(null);
+        if (desastre == null) {
+            return "redirect:/desastres?invalidDesastre";
+        }
+
+        if (cadastroFamiliaRepository.existsByDesastreId(id)) {
+            return "redirect:/desastres?deleteBlocked";
+        }
+
+        desastreRepository.delete(desastre);
+        return "redirect:/desastres?deleted";
     }
 
     private boolean temDadosInvalidos(Desastre desastre, Model model) {

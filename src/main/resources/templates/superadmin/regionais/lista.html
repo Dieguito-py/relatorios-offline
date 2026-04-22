@@ -6,7 +6,25 @@
     <title>Gerenciar Regionais</title>
 </head>
 <body>
-<th:block th:fragment="custom-styles"></th:block>
+<th:block th:fragment="custom-styles">
+    <style>
+        .section-card {
+            border: 1px solid #e9ecef;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            background: #fafbfc;
+        }
+
+        .section-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+    </style>
+</th:block>
 
 <th:block th:fragment="content">
     <div th:if="${param.created}" class="alert alert-success" role="alert">
@@ -93,7 +111,10 @@
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h2 class="h5 mb-3">Nova Coordenadoria Municipal (COMPDEC)</h2>
-                    <form th:action="@{/master/regionais/municipais}" method="post" class="row g-2 mb-4">
+                    <form th:action="@{/master/regionais/municipais}" method="post" class="row g-3 mb-4">
+                        <div class="col-12 section-card">
+                            <div class="section-title">Dados Gerais</div>
+                            <div class="row g-3">
                         <div class="col-md-5">
                             <label class="form-label" for="municipalNome">Nome da coordenadoria municipal</label>
                             <input id="municipalNome" name="nome" class="form-control" required maxlength="100">
@@ -107,6 +128,44 @@
                         </div>
                         <div class="col-md-2 d-grid align-self-end">
                             <button type="submit" class="btn btn-outline-primary">Criar</button>
+                        </div>
+                            </div>
+                        </div>
+                        <div class="col-12 section-card">
+                            <div class="section-title">Contato e Documento</div>
+                            <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label" for="municipalEndereco">Endereco</label>
+                            <input id="municipalEndereco" name="endereco" class="form-control" maxlength="255" placeholder="Rua, numero, bairro">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="municipalCnpj">CNPJ</label>
+                            <input id="municipalCnpj" name="cnpj" class="form-control js-cnpj" maxlength="18" inputmode="numeric" placeholder="00.000.000/0000-00">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="emailOrgaoProponente">E-mail do orgao proponente</label>
+                            <input id="emailOrgaoProponente" name="emailOrgaoProponente" type="email" class="form-control" maxlength="255">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="telefoneOrgaoProponente">Telefone do orgao proponente</label>
+                            <input id="telefoneOrgaoProponente" name="telefoneOrgaoProponente" class="form-control js-phone" maxlength="15" inputmode="numeric" placeholder="(00) 0000-0000">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="emailCompdec">E-mail COMPDEC</label>
+                            <input id="emailCompdec" name="emailCompdec" type="email" class="form-control" maxlength="255">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" for="telefoneCompdec">Telefone COMPDEC</label>
+                            <input id="telefoneCompdec" name="telefoneCompdec" class="form-control js-phone" maxlength="15" inputmode="numeric" placeholder="(00) 0000-0000">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" for="celularCompdec">Celular COMPDEC</label>
+                            <input id="celularCompdec" name="celularCompdec" class="form-control js-mobile" maxlength="15" inputmode="numeric" placeholder="(00) 00000-0000">
+                        </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <small class="text-muted">O coordenador da COMPDEC e vinculado na tela de edicao da municipal.</small>
                         </div>
                     </form>
 
@@ -138,7 +197,7 @@
                                 <td th:text="${#strings.isEmpty(regional.templateRelatorioFamilias) ? 'relatorioFamilias.jrxml' : regional.templateRelatorioFamilias}">relatorioFamilias.jrxml</td>
                                 <td>
                                     <span th:if="${#lists.isEmpty(regional.municipais)}" class="text-muted">Sem municípios vinculados</span>
-                                    <span th:each="municipal : ${regional.municipais}" class="badge text-bg-primary me-1 mb-1"
+                                    <span th:each="municipal : ${regional.municipais}" class="badge bg-primary me-1 mb-1"
                                           th:text="${municipal.nome}">Municipal</span>
                                 </td>
                                 <td>
@@ -198,16 +257,18 @@
                             <tr>
                                 <th>Municipal</th>
                                 <th>Regional</th>
+                                <th>Coordenador</th>
                                 <th>Ações</th>
                             </tr>
                             </thead>
                             <tbody>
                             <tr th:if="${#lists.isEmpty(municipaisPage.content)}">
-                                <td colspan="3" class="text-center text-muted py-4">Nenhum municipal cadastrado.</td>
+                                <td colspan="4" class="text-center text-muted py-4">Nenhum municipal cadastrado.</td>
                             </tr>
                             <tr th:each="municipal : ${municipaisPage.content}">
                                 <td th:text="${municipal.nome}">Municipal</td>
                                 <td th:text="${municipal.regional != null ? municipal.regional.nome : '-'}">Regional</td>
+                                <td th:text="${municipal.coordenadorCompdec != null ? (municipal.coordenadorCompdec.nome != null ? municipal.coordenadorCompdec.nome : municipal.coordenadorCompdec.username) : '-'}">Coordenador</td>
                                 <td>
                                     <a th:href="@{|/master/regionais/municipais/${municipal.id}/editar|}" class="btn btn-sm btn-outline-primary">
                                         <i class="bi bi-pencil"></i> Editar
@@ -244,7 +305,51 @@
     </div>
 </th:block>
 
-<th:block th:fragment="custom-scripts"></th:block>
+<th:block th:fragment="custom-scripts">
+    <script>
+        (function () {
+            function onlyDigits(value) {
+                return (value || "").replace(/\D/g, "");
+            }
+
+            function maskCnpj(value) {
+                var d = onlyDigits(value).slice(0, 14);
+                if (d.length <= 2) return d;
+                if (d.length <= 5) return d.slice(0, 2) + "." + d.slice(2);
+                if (d.length <= 8) return d.slice(0, 2) + "." + d.slice(2, 5) + "." + d.slice(5);
+                if (d.length <= 12) return d.slice(0, 2) + "." + d.slice(2, 5) + "." + d.slice(5, 8) + "/" + d.slice(8);
+                return d.slice(0, 2) + "." + d.slice(2, 5) + "." + d.slice(5, 8) + "/" + d.slice(8, 12) + "-" + d.slice(12);
+            }
+
+            function maskPhone(value) {
+                var d = onlyDigits(value).slice(0, 10);
+                if (d.length <= 2) return d;
+                if (d.length <= 6) return "(" + d.slice(0, 2) + ") " + d.slice(2);
+                return "(" + d.slice(0, 2) + ") " + d.slice(2, 6) + "-" + d.slice(6);
+            }
+
+            function maskMobile(value) {
+                var d = onlyDigits(value).slice(0, 11);
+                if (d.length <= 2) return d;
+                if (d.length <= 7) return "(" + d.slice(0, 2) + ") " + d.slice(2);
+                return "(" + d.slice(0, 2) + ") " + d.slice(2, 7) + "-" + d.slice(7);
+            }
+
+            function bindMask(selector, formatter) {
+                document.querySelectorAll(selector).forEach(function (input) {
+                    input.addEventListener("input", function () {
+                        input.value = formatter(input.value);
+                    });
+                    input.value = formatter(input.value);
+                });
+            }
+
+            bindMask(".js-cnpj", maskCnpj);
+            bindMask(".js-phone", maskPhone);
+            bindMask(".js-mobile", maskMobile);
+        })();
+    </script>
+</th:block>
 </body>
 </html>
 

@@ -49,6 +49,9 @@ public class AuthController {
 
         return usuarioRepository.findByUsername(request.username())
                 .map(usuario -> {
+                    if (Boolean.FALSE.equals(usuario.getAtivo())) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "usuário desativado"));
+                    }
                     if (!passwordEncoder.matches(request.password(), usuario.getPassword())) {
                         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "credenciais inválidas"));
                     }
@@ -100,6 +103,7 @@ public class AuthController {
         usuario.setUsername(request.username());
         usuario.setPassword(encoded);
         usuario.setRoles(roleSet);
+        usuario.setAtivo(true);
         Usuario saved = usuarioRepository.save(usuario);
 
         List<String> normalizedRoles = saved.getRoles().stream()
@@ -121,6 +125,12 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("valid", false));
         }
         String username = jwtProvider.getUsernameFromToken(token);
+        boolean ativo = usuarioRepository.findByUsername(username)
+                .map(usuario -> !Boolean.FALSE.equals(usuario.getAtivo()))
+                .orElse(false);
+        if (!ativo) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("valid", false));
+        }
         var roles = jwtProvider.getAuthorities(token).stream().map(GrantedAuthority::getAuthority).toList();
         return ResponseEntity.ok(Map.of(
                 "valid", true,

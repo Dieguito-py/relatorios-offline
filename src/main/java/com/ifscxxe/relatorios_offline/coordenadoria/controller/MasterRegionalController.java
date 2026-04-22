@@ -5,6 +5,7 @@ import com.ifscxxe.relatorios_offline.coordenadoria.model.Regional;
 import com.ifscxxe.relatorios_offline.coordenadoria.repository.MunicipalRepository;
 import com.ifscxxe.relatorios_offline.coordenadoria.repository.RegionalRepository;
 import com.ifscxxe.relatorios_offline.relatorio.repository.CadastroFamiliaRepository;
+import com.ifscxxe.relatorios_offline.usuario.model.Usuario;
 import com.ifscxxe.relatorios_offline.usuario.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -159,7 +160,14 @@ public class MasterRegionalController {
 
     @PostMapping("/municipais")
     public String criarMunicipal(@RequestParam("nome") String nome,
-                                 @RequestParam("regionalId") Long regionalId) {
+                                 @RequestParam("regionalId") Long regionalId,
+                                 @RequestParam(value = "endereco", required = false) String endereco,
+                                 @RequestParam(value = "cnpj", required = false) String cnpj,
+                                 @RequestParam(value = "emailOrgaoProponente", required = false) String emailOrgaoProponente,
+                                 @RequestParam(value = "telefoneOrgaoProponente", required = false) String telefoneOrgaoProponente,
+                                 @RequestParam(value = "emailCompdec", required = false) String emailCompdec,
+                                 @RequestParam(value = "telefoneCompdec", required = false) String telefoneCompdec,
+                                 @RequestParam(value = "celularCompdec", required = false) String celularCompdec) {
         if (nome == null || nome.trim().isEmpty()) {
             return "redirect:/master/regionais?invalidMunicipalName";
         }
@@ -176,6 +184,13 @@ public class MasterRegionalController {
         Municipal municipal = new Municipal();
         municipal.setNome(nome.trim());
         municipal.setRegional(regional);
+        municipal.setEndereco(normalizeOptional(endereco));
+        municipal.setCnpj(normalizeOptional(cnpj));
+        municipal.setEmailOrgaoProponente(normalizeOptional(emailOrgaoProponente));
+        municipal.setTelefoneOrgaoProponente(normalizeOptional(telefoneOrgaoProponente));
+        municipal.setEmailCompdec(normalizeOptional(emailCompdec));
+        municipal.setTelefoneCompdec(normalizeOptional(telefoneCompdec));
+        municipal.setCelularCompdec(normalizeOptional(celularCompdec));
         municipalRepository.save(municipal);
 
         return "redirect:/master/regionais?municipalCreated";
@@ -191,9 +206,11 @@ public class MasterRegionalController {
 
         List<Regional> regionais = regionalRepository.findAll();
         regionais.sort(Comparator.comparing(Regional::getNome, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)));
+        List<Usuario> usuariosMunicipais = usuarioRepository.findByMunicipalIdOrderByNomeAscUsernameAsc(id);
 
         model.addAttribute("municipal", municipal);
         model.addAttribute("regionais", regionais);
+        model.addAttribute("usuariosMunicipais", usuariosMunicipais);
         model.addAttribute("pageTitle", "Editar Municipal");
         return "superadmin/regionais/editarMunicipal";
     }
@@ -202,6 +219,14 @@ public class MasterRegionalController {
     public String editarMunicipal(@PathVariable Long id,
                                   @RequestParam("nome") String nome,
                                   @RequestParam("regionalId") Long regionalId,
+                                  @RequestParam(value = "endereco", required = false) String endereco,
+                                  @RequestParam(value = "cnpj", required = false) String cnpj,
+                                  @RequestParam(value = "emailOrgaoProponente", required = false) String emailOrgaoProponente,
+                                  @RequestParam(value = "telefoneOrgaoProponente", required = false) String telefoneOrgaoProponente,
+                                  @RequestParam(value = "emailCompdec", required = false) String emailCompdec,
+                                  @RequestParam(value = "telefoneCompdec", required = false) String telefoneCompdec,
+                                  @RequestParam(value = "celularCompdec", required = false) String celularCompdec,
+                                  @RequestParam(value = "coordenadorCompdecId", required = false) Long coordenadorCompdecId,
                                   RedirectAttributes redirectAttributes) {
         Municipal municipal = municipalRepository.findById(id)
                 .orElse(null);
@@ -222,6 +247,25 @@ public class MasterRegionalController {
 
         municipal.setNome(nome.trim());
         municipal.setRegional(regional);
+        municipal.setEndereco(normalizeOptional(endereco));
+        municipal.setCnpj(normalizeOptional(cnpj));
+        municipal.setEmailOrgaoProponente(normalizeOptional(emailOrgaoProponente));
+        municipal.setTelefoneOrgaoProponente(normalizeOptional(telefoneOrgaoProponente));
+        municipal.setEmailCompdec(normalizeOptional(emailCompdec));
+        municipal.setTelefoneCompdec(normalizeOptional(telefoneCompdec));
+        municipal.setCelularCompdec(normalizeOptional(celularCompdec));
+
+        if (coordenadorCompdecId == null) {
+            municipal.setCoordenadorCompdec(null);
+        } else {
+            Usuario coordenador = usuarioRepository.findByIdAndMunicipalId(coordenadorCompdecId, id).orElse(null);
+            if (coordenador == null) {
+                redirectAttributes.addFlashAttribute("error", "Selecione um coordenador valido da propria COMPDEC.");
+                return "redirect:/master/regionais/municipais/" + id + "/editar";
+            }
+            municipal.setCoordenadorCompdec(coordenador);
+        }
+
         municipalRepository.save(municipal);
 
         return "redirect:/master/regionais?municipalUpdated";
@@ -304,6 +348,14 @@ public class MasterRegionalController {
                     ex
             );
         }
+    }
+
+    private String normalizeOptional(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }
 

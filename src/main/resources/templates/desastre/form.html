@@ -29,7 +29,7 @@
             <form th:action="@{${formAction}}" th:object="${desastre}" method="post">
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label" for="tipoDesastre">Tipo de desastre</label>
+                        <label class="form-label" for="tipoDesastre">COBRADE</label>
                         <select id="tipoDesastre" th:field="*{tipoDesastre}" class="form-select" required>
                             <option value="" selected disabled>Selecione</option>
                             <option th:each="tipo : ${tiposDesastre}" th:value="${tipo}" th:text="${tipo.descricao}">Tipo</option>
