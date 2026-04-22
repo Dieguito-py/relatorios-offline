@@ -26,7 +26,6 @@ public class homeController {
             String username = authentication.getName();
             model.addAttribute("username", username);
             Usuario usuario = usuarioRepository.findByUsername(username).orElse(null);
-            model.addAttribute("nome", usuario != null ? usuario.getNome() : username);
             if (usuario != null) {
                 String municipal = usuario.getMunicipal() != null
                         ? usuario.getMunicipal().getNome()

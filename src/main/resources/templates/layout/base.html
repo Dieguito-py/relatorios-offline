@@ -76,6 +76,16 @@
             align-items: center;
             justify-content: center;
         }
+
+        /*Remover posteriormente*/
+        .pilot-badge {
+            background-color: var(--danger-color);
+            color: #fff;
+            border-radius: 999px;
+            font-weight: 600;
+            padding: 0.25rem 0.6rem;
+            line-height: 1;
+        }
     </style>
 
     <th:block th:if="${customStyles != null}" th:replace="${customStyles}"></th:block>
@@ -86,21 +96,35 @@
             <a class="navbar-brand" href="/">
                 <img th:src="@{/assets/logodc.png}" alt="Relatórios Offline logo">
                 <span class="d-none d-md-inline">Relatórios Offline</span>
+                <span class="badge pilot-badge ms-1">Piloto</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    <!-- Relatórios dropdown (admin only) -->
-                    <li class="nav-item dropdown" sec:authorize="hasRole('MUNICIPAL')">
-                        <a class="nav-link dropdown-toggle" href="#" id="relatoriosDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="bi bi-house-door"></i> Início
+                        </a>
+                    </li>
+
+                    <li class="nav-item" sec:authorize="hasAnyRole('MUNICIPAL','REGIONAL','MASTER')">
+                        <a class="nav-link" href="/relatorios/consultarRelatorios">
                             <i class="bi bi-file-earmark-text"></i> Relatórios
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="relatoriosDropdown">
-<!--                            <li><a class="dropdown-item" href="/relatorios/novo"><i class="bi bi-plus-circle me-2"></i>Criar</a></li>-->
-                            <li><a class="dropdown-item" href="/relatorios/consultarRelatorios"><i class="bi bi-search me-2"></i>Consultar</a></li>
-                        </ul>
+                    </li>
+
+                    <li class="nav-item" sec:authorize="hasAnyRole('MUNICIPAL','REGIONAL','MASTER')">
+                        <a class="nav-link" href="/desastres">
+                            <i class="bi bi-exclamation-triangle"></i> Desastres
+                        </a>
+                    </li>
+
+                    <li class="nav-item" sec:authorize="hasAnyRole('REGIONAL','MASTER')">
+                        <a class="nav-link" href="/superadmin/usuarios">
+                            <i class="bi bi-people"></i> Usuários
+                        </a>
                     </li>
 
                     <li class="nav-item" sec:authorize="hasRole('MASTER')">
@@ -108,23 +132,13 @@
                             <i class="bi bi-diagram-3"></i> Regionais
                         </a>
                     </li>
-
-                    <!-- Usuários dropdown (admin only) -->
-<!--                    <li class="nav-item dropdown" sec:authorize="hasRole('MUNICIPAL')">-->
-<!--                        <a class="nav-link dropdown-toggle" href="#" id="usuariosDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">-->
-<!--                            <i class="bi bi-people"></i> Usuários-->
-<!--                        </a>-->
-<!--                        <ul class="dropdown-menu" aria-labelledby="usuariosDropdown">-->
-<!--                            <li><a class="dropdown-item" href="/admin/usuarios/novo"><i class="bi bi-plus-circle me-2"></i>Criar</a></li>-->
-<!--                            <li><a class="dropdown-item" href="/admin/usuarios"><i class="bi bi-search me-2"></i>Consultar</a></li>-->
-<!--                        </ul>-->
-<!--                    </li>-->
                 </ul>
+
                 <div class="user-info text-white">
                     <div class="user-avatar">
                         <i class="bi bi-person"></i>
                     </div>
-                    <span th:text="${nome}">nome</span>
+                    <span th:text="${nome != null ? nome : #authentication.name}">nome</span>
                     <form th:action="@{/logout}" method="post" class="d-inline ms-3">
                         <button type="submit" class="btn btn-sm btn-outline-light">
                             <i class="bi bi-box-arrow-right"></i> Sair
