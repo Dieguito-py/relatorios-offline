@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::content}, ~{::custom-styles}, ~{::custom-scripts})}">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${pageTitle}">Template</title>
+</head>
+<body>
+<th:block th:fragment="custom-styles"></th:block>
+<th:block th:fragment="content">
+<section>
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="mb-1" th:text="${pageTitle}">Template</h2>
+            <p class="text-muted mb-0">Defina os campos que o app vai preencher.</p>
+        </div>
+        <a class="btn btn-outline-secondary" href="/regional/relatorios/templates">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <form th:action="${templateForm.id} != null ? @{|/regional/relatorios/templates/${templateForm.id}/editar|} : @{/regional/relatorios/templates}"
+          method="post">
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Nome</label>
+                        <input type="text" class="form-control" name="nome" th:value="${templateForm.nome}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Descricao</label>
+                        <input type="text" class="form-control" name="descricao" th:value="${templateForm.descricao}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" name="ativo">
+                            <option value="true" th:selected="${templateForm.ativo}">Ativo</option>
+                            <option value="false" th:selected="${!templateForm.ativo}">Inativo</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="mb-0">Campos</h5>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="add-campo">
+                        <i class="bi bi-plus-lg"></i> Adicionar campo
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                        <tr>
+                            <th style="min-width: 160px;">Chave</th>
+                            <th style="min-width: 180px;">Rotulo</th>
+                            <th style="min-width: 160px;">Tipo</th>
+                            <th style="width: 110px;">Obrigatorio</th>
+                            <th style="min-width: 200px;">Opcoes (selecao)</th>
+                            <th style="width: 90px;">Ordem</th>
+                            <th style="width: 60px;"></th>
+                        </tr>
+                        </thead>
+                        <tbody id="campos-body">
+                        <tr th:each="campo, iter : ${templateForm.campos}">
+                            <td>
+                                <input type="text" class="form-control form-control-sm"
+                                       th:name="|campos[${iter.index}].chave|"
+                                       th:value="${campo.chave}" placeholder="ex: nome_atingido">
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm"
+                                       th:name="|campos[${iter.index}].rotulo|"
+                                       th:value="${campo.rotulo}" placeholder="Nome do atingido">
+                            </td>
+                            <td>
+                                <select class="form-select form-select-sm"
+                                        th:name="|campos[${iter.index}].tipo|">
+                                    <option value="" th:selected="${campo.tipo == null}">Selecione</option>
+                                    <option th:each="tipo : ${tiposCampo}"
+                                            th:value="${tipo.name()}"
+                                            th:selected="${campo.tipo == tipo.name()}"
+                                            th:text="${tipo.name()}">
+                                    </option>
+                                </select>
+                            </td>
+                            <td class="text-center">
+                                <input type="checkbox" class="form-check-input"
+                                       th:name="|campos[${iter.index}].obrigatorio|"
+                                       value="true" th:checked="${campo.obrigatorio}">
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm campo-opcoes"
+                                       th:name="|campos[${iter.index}].opcoes|"
+                                       th:value="${campo.opcoes}" placeholder="opcao1, opcao2" disabled>
+                            </td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm"
+                                       th:name="|campos[${iter.index}].ordem|"
+                                       th:value="${campo.ordem}">
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-danger remove-campo">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="text-muted small mb-0">
+                    Use chave unica com letras, numeros ou _. Para selecao e multipla selecao, informe opcoes separadas por virgula.
+                </p>
+            </div>
+        </div>
+
+        <div class="mt-4 d-flex justify-content-end gap-2">
+            <a class="btn btn-outline-secondary" href="/regional/relatorios/templates">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+    </form>
+</section>
+</th:block>
+
+<th:block th:fragment="custom-scripts">
+<script>
+    (function () {
+        var body = document.getElementById('campos-body');
+        var addButton = document.getElementById('add-campo');
+        var form = document.querySelector('form');
+        var tiposComOpcoes = ['SELECAO', 'MULTIPLA_SELECAO'];
+
+        function atualizarIndices() {
+            var rows = body.querySelectorAll('tr');
+            rows.forEach(function (row, index) {
+                row.querySelectorAll('input, select').forEach(function (input) {
+                    var name = input.getAttribute('name');
+                    if (!name) {
+                        return;
+                    }
+                    var updated = name.replace(/campos\[\d+\]/, 'campos[' + index + ']');
+                    input.setAttribute('name', updated);
+                });
+            });
+        }
+
+        function atualizarOpcoesParaLinha(row) {
+            var select = row.querySelector('select[name$=".tipo"]');
+            var opcoesInput = row.querySelector('.campo-opcoes');
+            if (!select || !opcoesInput) {
+                return;
+            }
+            var habilitar = tiposComOpcoes.indexOf(select.value) !== -1;
+            opcoesInput.disabled = !habilitar;
+            if (!habilitar) {
+                opcoesInput.value = '';
+            }
+        }
+
+        function criarLinha() {
+            var row = document.createElement('tr');
+            var selectBase = body.querySelector('select[name$=".tipo"]');
+            var opcoesTipo = selectBase
+                ? Array.prototype.slice.call(selectBase.options).map(function (opt) {
+                    return '<option value="' + opt.value + '">' + opt.text + '</option>';
+                }).join('')
+                : '<option value="">Selecione</option>';
+            row.innerHTML = '' +
+                '<td><input type="text" class="form-control form-control-sm" name="campos[0].chave" placeholder="ex: nome_atingido"></td>' +
+                '<td><input type="text" class="form-control form-control-sm" name="campos[0].rotulo" placeholder="Nome do atingido"></td>' +
+                '<td><select class="form-select form-select-sm" name="campos[0].tipo">' +
+                opcoesTipo +
+                '</select></td>' +
+                '<td class="text-center">' +
+                '<input type="checkbox" class="form-check-input" name="campos[0].obrigatorio" value="true">' +
+                '</td>' +
+                '<td><input type="text" class="form-control form-control-sm campo-opcoes" name="campos[0].opcoes" placeholder="opcao1, opcao2" disabled></td>' +
+                '<td><input type="number" class="form-control form-control-sm" name="campos[0].ordem"></td>' +
+                '<td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger remove-campo"><i class="bi bi-x-lg"></i></button></td>';
+            body.appendChild(row);
+            atualizarIndices();
+            atualizarOpcoesParaLinha(row);
+        }
+
+        function adicionarFalsosParaNaoMarcados() {
+            var checkboxes = body.querySelectorAll('input[type="checkbox"][name$=".obrigatorio"]');
+            checkboxes.forEach(function (checkbox) {
+                if (!checkbox.checked) {
+                    var hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = checkbox.name;
+                    hidden.value = 'false';
+                    form.appendChild(hidden);
+                }
+            });
+        }
+
+        addButton.addEventListener('click', function () {
+            criarLinha();
+        });
+
+        body.addEventListener('click', function (event) {
+            if (event.target.closest('.remove-campo')) {
+                var row = event.target.closest('tr');
+                if (row) {
+                    row.remove();
+                    atualizarIndices();
+                }
+            }
+        });
+
+        body.addEventListener('change', function (event) {
+            if (event.target && event.target.matches('select[name$=".tipo"]')) {
+                atualizarOpcoesParaLinha(event.target.closest('tr'));
+            }
+        });
+
+        if (form) {
+            form.addEventListener('submit', function () {
+                adicionarFalsosParaNaoMarcados();
+            });
+        }
+
+        body.querySelectorAll('tr').forEach(function (row) {
+            atualizarOpcoesParaLinha(row);
+        });
+    })();
+</script>
+</th:block>
+</body>
+</html>
+
+

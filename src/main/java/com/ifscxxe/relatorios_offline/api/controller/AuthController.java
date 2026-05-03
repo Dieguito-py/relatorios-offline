@@ -67,7 +67,9 @@ public class AuthController {
 
                     String token = jwtProvider.generateToken(userDetails);
                     System.out.println("Usuário logado via API: " + usuario.getUsername());
-                    return ResponseEntity.ok(new LoginResponse(token, usuario.getNome()));
+                    Long municipalId = usuario.getMunicipal() != null ? usuario.getMunicipal().getId() : null;
+                    String municipalNome = usuario.getMunicipal() != null ? usuario.getMunicipal().getNome() : null;
+                    return ResponseEntity.ok(new LoginResponse(token, usuario.getNome(), municipalId, municipalNome));
                 })
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "credenciais inválidas")));
     }

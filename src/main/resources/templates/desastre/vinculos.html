@@ -36,7 +36,7 @@
                     <form method="get" class="row g-2 mb-3">
                         <div class="col-12">
                             <label for="q" class="form-label">Pesquisar</label>
-                            <input id="q" type="search" name="q" class="form-control" th:value="${q}" placeholder="Nome atingido ou cidade">
+                            <input id="q" type="search" name="q" class="form-control" th:value="${q}" placeholder="Cidade">
                         </div>
                         <div class="col-md-5">
                             <label for="inicio" class="form-label">Data inicial</label>
@@ -60,7 +60,7 @@
                                         <input type="checkbox" id="check-all-left" aria-label="Selecionar todos disponiveis">
                                     </th>
                                     <th>Data</th>
-                                    <th>Nome</th>
+                                    <th>Template</th>
                                     <th>Cidade</th>
                                 </tr>
                                 </thead>
@@ -70,9 +70,9 @@
                                 </tr>
                                 <tr th:each="relatorio : ${relatoriosDisponiveisPage.content}">
                                     <td><input class="form-check-input check-left" type="checkbox" name="relatorioIds" th:value="${relatorio.id}" aria-label="Selecionar relatorio"></td>
-                                    <td th:text="${#temporals.format(relatorio.dataDesastre, 'dd/MM/yyyy HH:mm')}">01/01/2026</td>
-                                    <td th:text="${relatorio.nomeAtingido}">Nome</td>
-                                    <td th:text="${relatorio.cidadeAtingido}">Cidade</td>
+                                    <td th:text="${#temporals.format(relatorio.dataRegistro, 'dd/MM/yyyy HH:mm')}">01/01/2026</td>
+                                    <td th:text="${relatorio.template != null ? relatorio.template.nome : '-'}">Template</td>
+                                    <td th:text="${relatorio.cidade}">Cidade</td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -116,7 +116,7 @@
                                         <input type="checkbox" id="check-all-right" aria-label="Selecionar todos vinculados">
                                     </th>
                                     <th>Data</th>
-                                    <th>Nome</th>
+                                    <th>Template</th>
                                     <th>Cidade</th>
                                     <th>Acoes</th>
                                 </tr>
@@ -127,9 +127,9 @@
                                 </tr>
                                 <tr th:each="relatorio : ${relatoriosVinculados}">
                                     <td><input class="form-check-input check-right" type="checkbox" name="relatorioIds" th:value="${relatorio.id}" aria-label="Selecionar relatorio vinculado"></td>
-                                    <td th:text="${#temporals.format(relatorio.dataDesastre, 'dd/MM/yyyy HH:mm')}">01/01/2026</td>
-                                    <td th:text="${relatorio.nomeAtingido}">Nome</td>
-                                    <td th:text="${relatorio.cidadeAtingido}">Cidade</td>
+                                    <td th:text="${#temporals.format(relatorio.dataRegistro, 'dd/MM/yyyy HH:mm')}">01/01/2026</td>
+                                    <td th:text="${relatorio.template != null ? relatorio.template.nome : '-'}">Template</td>
+                                    <td th:text="${relatorio.cidade}">Cidade</td>
                                     <td>
                                         <a th:href="@{/relatorios/{id}(id=${relatorio.id})}" class="btn btn-sm btn-outline-primary">
                                             <i class="bi bi-eye"></i>
@@ -170,5 +170,4 @@
 </th:block>
 </body>
 </html>
-
 

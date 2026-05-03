@@ -14,6 +14,9 @@ public class RelatorioFoto {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "chave", length = 120)
+    private String chave;
+
     @Column(name = "nome_original")
     private String nomeOriginal;
 
@@ -33,7 +36,7 @@ public class RelatorioFoto {
     @JoinColumn(name = "relatorio_id", nullable = false)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    private CadastroFamilia relatorio;
+    private RelatorioDinamico relatorio;
 }
 
 

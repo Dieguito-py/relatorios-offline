@@ -51,6 +51,30 @@
                     <label for="fim" class="form-label">Data final</label>
                     <input type="date" id="fim" name="fim" class="form-control" th:value="${fim}">
                 </div>
+                <div class="col-md-4">
+                    <label for="cidade" class="form-label">Cidade</label>
+                    <input type="text" id="cidade" name="cidade" class="form-control" th:value="${cidade}">
+                </div>
+                <div class="col-md-4">
+                    <label for="municipalId" class="form-label">Municipal</label>
+                    <select id="municipalId" name="municipalId" class="form-select">
+                        <option value="">Todas</option>
+                        <option th:each="municipal : ${municipais}"
+                                th:value="${municipal.id}"
+                                th:text="${municipal.nome}"
+                                th:selected="${municipalId != null && municipalId == municipal.id}"></option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="regionalId" class="form-label">Regional</label>
+                    <select id="regionalId" name="regionalId" class="form-select">
+                        <option value="">Todas</option>
+                        <option th:each="regional : ${regionais}"
+                                th:value="${regional.id}"
+                                th:text="${regional.nome}"
+                                th:selected="${regionalId != null && regionalId == regional.id}"></option>
+                    </select>
+                </div>
                 <div class="col-md-4 d-flex align-items-end gap-2">
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="bi bi-filter"></i> Filtrar
@@ -69,27 +93,25 @@
                 <thead>
                 <tr>
                     <th>Data</th>
-                    <th>Nome atingido</th>
-                    <th>Usuario remetente</th>
+                    <th>Template</th>
                     <th>Cidade</th>
-                    <th>Moradia</th>
-                    <th>Dano residência</th>
+                    <th>Municipal</th>
+                    <th>Regional</th>
                     <th>Ações</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:if="${relatorios == null || #lists.isEmpty(relatorios)}">
-                    <td colspan="7" class="text-center text-muted py-5">
+                    <td colspan="6" class="text-center text-muted py-5">
                         Nenhum cadastro encontrado para o seu escopo de acesso.
                     </td>
                 </tr>
                 <tr th:each="relatorio : ${relatorios}">
-                    <td th:text="${#temporals.format(relatorio.dataDesastre, 'dd/MM/yyyy HH:mm')}">01/01/2024</td>
-                    <td th:text="${relatorio.nomeAtingido}">Nome</td>
-                    <td th:text="${relatorio.usuario != null ? (#strings.isEmpty(relatorio.usuario.nome) ? relatorio.usuario.username : relatorio.usuario.nome) : 'Nao informado'}">Usuario</td>
-                    <td th:text="${relatorio.cidadeAtingido}">Cidade</td>
-                    <td th:text="${relatorio.moradia}">Moradia</td>
-                    <td th:text="${relatorio.danoResidencia}">Dano</td>
+                    <td th:text="${#temporals.format(relatorio.dataRegistro, 'dd/MM/yyyy HH:mm')}">01/01/2024</td>
+                    <td th:text="${relatorio.template != null ? relatorio.template.nome : '-'}">Template</td>
+                    <td th:text="${relatorio.cidade}">Cidade</td>
+                    <td th:text="${relatorio.municipal != null ? relatorio.municipal.nome : '-'}">Municipal</td>
+                    <td th:text="${relatorio.regional != null ? relatorio.regional.nome : '-'}">Regional</td>
                     <td class="d-flex gap-2 flex-wrap">
                         <a th:href="@{/relatorios/{id}(id=${relatorio.id})}" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-eye"></i> Ver detalhes

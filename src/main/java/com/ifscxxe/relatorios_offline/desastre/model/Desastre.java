@@ -1,6 +1,6 @@
 package com.ifscxxe.relatorios_offline.desastre.model;
 
-import com.ifscxxe.relatorios_offline.relatorio.model.CadastroFamilia;
+import com.ifscxxe.relatorios_offline.relatorio.model.RelatorioDinamico;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -34,6 +34,6 @@ public class Desastre {
     @OneToMany(mappedBy = "desastre")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    private List<CadastroFamilia> cadastrosFamilia = new ArrayList<>();
+    private List<RelatorioDinamico> cadastrosFamilia = new ArrayList<>();
 }
 

@@ -1,51 +1,64 @@
 package com.ifscxxe.relatorios_offline.api.controller;
 
-import com.ifscxxe.relatorios_offline.api.dto.relatorio.request.RelatorioRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ifscxxe.relatorios_offline.api.dto.relatorio.request.RelatorioDinamicoRequest;
 import com.ifscxxe.relatorios_offline.api.dto.relatorio.response.RelatorioResponse;
 import com.ifscxxe.relatorios_offline.coordenadoria.model.Municipal;
 import com.ifscxxe.relatorios_offline.coordenadoria.repository.MunicipalRepository;
 import com.ifscxxe.relatorios_offline.core.storage.FileStorageService;
 import com.ifscxxe.relatorios_offline.core.storage.StoredFileMetadata;
-import com.ifscxxe.relatorios_offline.relatorio.model.CadastroFamilia;
-import com.ifscxxe.relatorios_offline.relatorio.repository.CadastroFamiliaRepository;
+import com.ifscxxe.relatorios_offline.relatorio.model.RelatorioDinamico;
+import com.ifscxxe.relatorios_offline.relatorio.model.RelatorioFoto;
+import com.ifscxxe.relatorios_offline.relatorio.model.RelatorioTemplate;
+import com.ifscxxe.relatorios_offline.relatorio.repository.RelatorioDinamicoRepository;
+import com.ifscxxe.relatorios_offline.relatorio.repository.RelatorioFotoRepository;
+import com.ifscxxe.relatorios_offline.relatorio.repository.RelatorioTemplateRepository;
 import com.ifscxxe.relatorios_offline.usuario.model.Usuario;
 import com.ifscxxe.relatorios_offline.usuario.repository.UsuarioRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping({"/api/relatorios", "/api/cadastros-familia"})
+@RequestMapping("/api/relatorios")
 public class RelatorioController {
 
-    private final CadastroFamiliaRepository cadastroFamiliaRepository;
+    private final RelatorioDinamicoRepository relatorioDinamicoRepository;
     private final UsuarioRepository usuarioRepository;
     private final MunicipalRepository municipalRepository;
+    private final RelatorioTemplateRepository templateRepository;
+    private final RelatorioFotoRepository fotoRepository;
+    private final ObjectMapper objectMapper;
     private final FileStorageService fileStorageService;
 
-    public RelatorioController(CadastroFamiliaRepository cadastroFamiliaRepository,
+    public RelatorioController(RelatorioDinamicoRepository relatorioDinamicoRepository,
                                UsuarioRepository usuarioRepository,
                                MunicipalRepository municipalRepository,
+                               RelatorioTemplateRepository templateRepository,
+                               RelatorioFotoRepository fotoRepository,
+                               ObjectMapper objectMapper,
                                FileStorageService fileStorageService) {
-        this.cadastroFamiliaRepository = cadastroFamiliaRepository;
+        this.relatorioDinamicoRepository = relatorioDinamicoRepository;
         this.usuarioRepository = usuarioRepository;
         this.municipalRepository = municipalRepository;
+        this.templateRepository = templateRepository;
+        this.fotoRepository = fotoRepository;
+        this.objectMapper = objectMapper;
         this.fileStorageService = fileStorageService;
     }
 
     @PostMapping(path = "/criar", consumes = "multipart/form-data")
-    public ResponseEntity<?> criarRelatorio(@ModelAttribute RelatorioRequest request) {
-        if (request == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "Dados do relatório são obrigatórios"));
-        }
+    public ResponseEntity<?> criarRelatorio(
+            @RequestParam("request") String requestJson,
+            HttpServletRequest httpRequest) {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated() || authentication.getPrincipal().equals("anonymousUser")) {
@@ -58,59 +71,14 @@ public class RelatorioController {
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + username));
 
         try {
-            CadastroFamilia relatorio = new CadastroFamilia();
+            RelatorioDinamicoRequest request = objectMapper.readValue(requestJson, RelatorioDinamicoRequest.class);
 
-            relatorio.setNomeAtingido(request.nomeAtingido());
-            relatorio.setCpfAtingido(request.cpfAtingido());
-            relatorio.setRgAtingido(request.rgAtingido());
-            relatorio.setDataNascimentoAtingido(request.dataNascimentoAtingido());
-            relatorio.setEnderecoAtingido(request.enderecoAtingido());
-            relatorio.setBairroAtingido(request.bairroAtingido());
-            relatorio.setCidadeAtingido(request.cidadeAtingido());
-            relatorio.setComplementoAtingido(request.complementoAtingido());
-
-            relatorio.setLocalizacao(request.localizacao());
-            relatorio.setMoradia(request.moradia());
-            relatorio.setDanoResidencia(request.danoResidencia());
-            relatorio.setEstimativaDanoMoveis(request.estimativaDanoMoveis());
-            relatorio.setEstimativaDanoEdificacao(request.estimativaDanoEdificacao());
-            relatorio.setOcupacao(request.ocupacao());
-            relatorio.setTipoConstrucao(request.tipoConstrucao());
-            relatorio.setAlternativaMoradia(request.alternativaMoradia());
-            relatorio.setObservacaoImovel(request.observacaoImovel());
-
-            relatorio.setNumeroTotalPessoas(request.numeroTotalPessoas());
-            relatorio.setMenores0a12(request.menores0a12());
-            relatorio.setMenores13a17(request.menores13a17());
-            relatorio.setMaiores18a59(request.maiores18a59());
-            relatorio.setIdosos60mais(request.idosos60mais());
-            relatorio.setPossuiNecessidadesEspeciais(request.possuiNecessidadesEspeciais());
-            relatorio.setQuantidadeNecessidadesEspeciais(request.quantidadeNecessidadesEspeciais());
-            relatorio.setObservacaoNecessidades(request.observacaoNecessidades());
-            relatorio.setUsoMedicamentoContinuo(request.usoMedicamentoContinuo());
-            relatorio.setMedicamento(request.medicamento());
-            relatorio.setPossuiDesaparecidos(request.possuiDesaparecidos());
-            relatorio.setQuantidadeDesaparecidos(request.quantidadeDesaparecidos());
-            relatorio.setQuantidadeFeridos(request.quantidadeFeridos());
-            relatorio.setQuantidadeObitos(request.quantidadeObitos());
-
-            relatorio.setQtdAguaPotavel5L(request.qtdAguaPotavel5L());
-            relatorio.setQtdColchoesSolteiro(request.qtdColchoesSolteiro());
-            relatorio.setQtdColchoesCasal(request.qtdColchoesCasal());
-            relatorio.setQtdCestasBasicas(request.qtdCestasBasicas());
-            relatorio.setQtdKitHigienePessoal(request.qtdKitHigienePessoal());
-            relatorio.setQtdKitLimpeza(request.qtdKitLimpeza());
-            relatorio.setQtdMoveis(request.qtdMoveis());
-            relatorio.setQtdTelhas6mm(request.qtdTelhas6mm());
-            relatorio.setQtdTelhas4mm(request.qtdTelhas4mm());
-            relatorio.setQtdRoupas(request.qtdRoupas());
-            relatorio.setOutrasNecessidades(request.outrasNecessidades());
-            relatorio.setObservacaoAssistencia(request.observacaoAssistencia());
-
-            relatorio.setLatitude(request.latitude());
-            relatorio.setLongitude(request.longitude());
-
-            relatorio.setUsuario(usuario);
+            if (request.templateId() == null) {
+                throw new IllegalArgumentException("Informe o templateId do relatório.");
+            }
+            if (request.cidade() == null || request.cidade().trim().isEmpty()) {
+                throw new IllegalArgumentException("Informe a cidade do relatório.");
+            }
 
             Municipal municipal;
             if (request.municipalId() != null) {
@@ -123,39 +91,51 @@ public class RelatorioController {
                 }
             }
 
+            RelatorioTemplate template = templateRepository.findById(request.templateId())
+                    .orElseThrow(() -> new IllegalArgumentException("Template não encontrado"));
+
+            if (!Boolean.TRUE.equals(template.getAtivo())) {
+                throw new IllegalArgumentException("Template está inativo");
+            }
+
+            if (template.getRegional() == null || template.getRegional().getId() == null) {
+                throw new IllegalArgumentException("Template não possui regional configurada");
+            }
+            if (municipal.getRegional() == null || municipal.getRegional().getId() == null) {
+                throw new IllegalArgumentException("Municipal sem regional vinculada");
+            }
+            if (!template.getRegional().getId().equals(municipal.getRegional().getId())) {
+                throw new IllegalArgumentException("Template não pertence à regional do municipal informado");
+            }
+
+            RelatorioDinamico relatorio = new RelatorioDinamico();
+            relatorio.setTemplate(template);
+            relatorio.setCidade(request.cidade().trim());
+            relatorio.setDadosJson(request.dados() == null ? null : objectMapper.writeValueAsString(request.dados()));
+            relatorio.setUsuario(usuario);
             relatorio.setMunicipal(municipal);
-            relatorio.setRegional(municipal.getRegional() != null
-                    ? municipal.getRegional()
-                    : usuario.getRegional());
+            relatorio.setRegional(municipal.getRegional());
 
-            List<MultipartFile> fotosParaSalvar = new ArrayList<>();
-            if (request.fotosResidencia() != null) {
-                request.fotosResidencia().stream()
-                        .filter(file -> file != null && !file.isEmpty())
-                        .forEach(fotosParaSalvar::add);
-            }
+            RelatorioDinamico savedRelatorio = relatorioDinamicoRepository.save(relatorio);
 
-            if (!fotosParaSalvar.isEmpty()) {
-                if (relatorio.getRegional() == null || relatorio.getRegional().getId() == null) {
-                    throw new IllegalArgumentException("Regional não encontrada para salvar a foto da residência");
-                }
-
-                for (MultipartFile foto : fotosParaSalvar) {
-                    StoredFileMetadata fotoSalva = fileStorageService.storeRegionalPhoto(
-                            foto,
-                            relatorio.getRegional().getId()
-                    );
-                    relatorio.addFotoResidencia(fotoSalva);
+            Long regionalId = municipal.getRegional().getId();
+            if (httpRequest instanceof MultipartHttpServletRequest multipartRequest) {
+                for (Map.Entry<String, List<MultipartFile>> entry : multipartRequest.getMultiFileMap().entrySet()) {
+                    for (MultipartFile file : entry.getValue()) {
+                        if (!file.isEmpty()) {
+                            salvarFoto(savedRelatorio, entry.getKey(), file, regionalId);
+                        }
+                    }
                 }
             }
-
-            CadastroFamilia savedRelatorio = cadastroFamiliaRepository.save(relatorio);
 
             RelatorioResponse response = new RelatorioResponse(
                     savedRelatorio.getId(),
-                    savedRelatorio.getDataDesastre(),
-                    savedRelatorio.getNomeAtingido(),
-                    savedRelatorio.getCidadeAtingido()
+                    savedRelatorio.getDataRegistro(),
+                    savedRelatorio.getTemplate().getId(),
+                    savedRelatorio.getCidade(),
+                    savedRelatorio.getMunicipal().getId(),
+                    savedRelatorio.getRegional().getId()
             );
 
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -167,5 +147,19 @@ public class RelatorioController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Erro ao criar relatório: " + e.getMessage()));
         }
+    }
+
+    private void salvarFoto(RelatorioDinamico relatorio, String chave, MultipartFile file, Long regionalId) {
+        StoredFileMetadata meta = fileStorageService.storeRegionalPhoto(file, regionalId);
+
+        RelatorioFoto foto = new RelatorioFoto();
+        foto.setChave(chave);
+        foto.setNomeOriginal(meta.nomeOriginal());
+        foto.setNomeGerado(meta.nomeGerado());
+        foto.setCaminho(meta.caminho());
+        foto.setContentType(meta.contentType());
+        foto.setTamanho(meta.tamanho());
+        foto.setRelatorio(relatorio);
+        fotoRepository.save(foto);
     }
 }

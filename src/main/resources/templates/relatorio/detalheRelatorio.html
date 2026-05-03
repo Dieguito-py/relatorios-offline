@@ -32,9 +32,17 @@
             text-decoration: none;
         }
         .foto-residencia {
-            max-width: 100%;
-            max-height: 400px;
+            width: 100%;
+            height: 180px;
             object-fit: cover;
+            transition: transform 0.2s;
+        }
+        .foto-residencia:hover {
+            transform: scale(1.05);
+        }
+        .foto-card {
+            overflow: hidden;
+            border-radius: 10px;
         }
         .foto-residencia-grid {
             display: grid;
@@ -51,16 +59,11 @@
                 <i class="bi bi-arrow-left"></i> Voltar para lista
             </a>
             <h2 class="mt-2 mb-0">Detalhes do Relatório</h2>
-            <p class="text-muted mb-0" th:text="${#temporals.format(relatorio.dataDesastre, 'dd/MM/yyyy HH:mm')}">
+            <p class="text-muted mb-0" th:text="${#temporals.format(relatorio.dataRegistro, 'dd/MM/yyyy HH:mm')}">
                 01/01/2024 12:00
             </p>
         </div>
         <div class="d-flex gap-2">
-            <button type="button" id="exportPdfBtn" class="btn btn-outline-danger"
-                    th:attr="data-filename=${'relatorio-' + relatorio.id + '.pdf'}"
-                    onclick="exportToPdf(this)">
-                <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
-            </button>
             <form th:action="@{/relatorios/{id}/excluir(id=${relatorio.id})}" method="post" class="d-inline"
                   onsubmit="return confirm('Tem certeza que deseja excluir este relatório?');">
                 <button type="submit" class="btn btn-outline-secondary">
@@ -70,229 +73,76 @@
         </div>
     </div>
 
-    <div id="report-content">
-        <div class="detail-card">
-            <div class="section-title">Dados da Ocorrência</div>
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="data-label">Nome</div>
-                    <div class="data-value" th:text="${relatorio.nomeAtingido}">Nome Completo</div>
-                </div>
-                <div class="col-md-4">
-                    <div class="data-label">CPF</div>
-                    <div class="data-value" th:text="${relatorio.cpfAtingido}">000.000.000-00</div>
-                </div>
-                <div class="col-md-4">
-                    <div class="data-label">RG</div>
-                    <div class="data-value" th:text="${relatorio.rgAtingido}">0.000.000</div>
-                </div>
-                <div class="col-md-4">
-                    <div class="data-label">Data de nascimento</div>
-                    <div class="data-value" th:text="${#temporals.format(relatorio.dataNascimentoAtingido, 'dd/MM/yyyy')}">01/01/1980</div>
-                </div>
-                <div class="col-md-8">
-                    <div class="data-label">Endereço</div>
-                    <div class="data-value">
-                        <span th:text="${relatorio.enderecoAtingido}">Endereço</span>,
-                        <span th:text="${relatorio.bairroAtingido}">Bairro</span> -
-                        <span th:text="${relatorio.cidadeAtingido}">Cidade</span>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="data-label">Complemento</div>
-                    <div class="data-value" th:text="${relatorio.complementoAtingido}">Complemento</div>
-                </div>
+    <div class="detail-card">
+        <div class="section-title"><i class="bi bi-info-circle me-2"></i>Informações gerais</div>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="data-label"><i class="bi bi-file-earmark-text me-1"></i>Template</div>
+                <div class="data-value" th:text="${relatorio.template != null ? relatorio.template.nome : '-'}">Template</div>
+            </div>
+            <div class="col-md-4">
+                <div class="data-label"><i class="bi bi-geo-alt me-1"></i>Cidade</div>
+                <div class="data-value" th:text="${relatorio.cidade}">Cidade</div>
+            </div>
+            <div class="col-md-4">
+                <div class="data-label"><i class="bi bi-building me-1"></i>Municipal</div>
+                <div class="data-value" th:text="${relatorio.municipal != null ? relatorio.municipal.nome : '-'}">Municipal</div>
+            </div>
+            <div class="col-md-4">
+                <div class="data-label"><i class="bi bi-map me-1"></i>Regional</div>
+                <div class="data-value" th:text="${relatorio.regional != null ? relatorio.regional.nome : '-'}">Regional</div>
+            </div>
+            <div class="col-md-4">
+                <div class="data-label"><i class="bi bi-person me-1"></i>Usuário</div>
+                <div class="data-value" th:text="${relatorio.usuario != null ? (relatorio.usuario.nome != null ? relatorio.usuario.nome : relatorio.usuario.username) : '-'}">Usuário</div>
             </div>
         </div>
+    </div>
 
-        <div class="detail-card">
-            <div class="section-title">Situação da Moradia</div>
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="data-label">Moradia</div>
-                    <div class="data-value" th:text="${relatorio.moradia}">Própria</div>
-                </div>
-                <div class="col-md-4">
-                    <div class="data-label">Tipo construção</div>
-                    <div class="data-value" th:text="${relatorio.tipoConstrucao}">Alvenaria</div>
-                </div>
-                <div class="col-md-4">
-                    <div class="data-label">Dano</div>
-                    <div class="data-value" th:text="${relatorio.danoResidencia}">Parcial</div>
-                </div>
-                <div class="col-md-4">
-                    <div class="data-label">Estimativa dano móveis</div>
-                    <div class="data-value" th:text="${relatorio.estimativaDanoMoveis != null ? 'R$ ' + #numbers.formatDecimal(relatorio.estimativaDanoMoveis, 2, 2) : '-'}">R$ 0,00</div>
-                </div>
-                <div class="col-md-4">
-                    <div class="data-label">Estimativa dano edificação</div>
-                    <div class="data-value" th:text="${relatorio.estimativaDanoEdificacao != null ? 'R$ ' + #numbers.formatDecimal(relatorio.estimativaDanoEdificacao, 2, 2) : '-'}">R$ 0,00</div>
-                </div>
-                <div class="col-md-4">
-                    <div class="data-label">Ocupação</div>
-                    <div class="data-value" th:text="${relatorio.ocupacao}">Residencial</div>
-                </div>
-                <div class="col-md-4">
-                    <div class="data-label">Alternativa moradia</div>
-                    <div class="data-value" th:text="${relatorio.alternativaMoradia}">Familiares</div>
-                </div>
-                <div class="col-md-12">
-                    <div class="data-label">Referência de localização</div>
-                    <div class="data-value">
-                        <span th:text="${relatorio.localizacao}">Referência</span>
-                    </div>
-                </div>
-                <div class="col-md-12">
-                    <div class="data-label">Observações</div>
-                    <div class="data-value" th:text="${relatorio.observacaoImovel}">Observações sobre o imóvel</div>
-                </div>
-            </div>
+    <div class="detail-card">
+        <div class="section-title"><i class="bi bi-list-check me-2"></i>Campos do template</div>
+        <div th:if="${#lists.isEmpty(camposRenderizados)}" class="text-muted">
+            Nenhum campo encontrado para este template.
         </div>
-
-        <div class="detail-card">
-            <div class="section-title">Composição Familiar</div>
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <div class="data-label">Total de pessoas</div>
-                    <div class="data-value" th:text="${relatorio.numeroTotalPessoas}">0</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">0 a 12 anos</div>
-                    <div class="data-value" th:text="${relatorio.menores0a12}">0</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">13 a 17 anos</div>
-                    <div class="data-value" th:text="${relatorio.menores13a17}">0</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">18 a 59 anos</div>
-                    <div class="data-value" th:text="${relatorio.maiores18a59}">0</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">60+ anos</div>
-                    <div class="data-value" th:text="${relatorio.idosos60mais}">0</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">Necessidades especiais</div>
-                    <div class="data-value" th:text="${relatorio.possuiNecessidadesEspeciais} ? 'Sim' : 'Não'">Não</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">Qtd necessidades</div>
-                    <div class="data-value" th:text="${relatorio.quantidadeNecessidadesEspeciais}">0</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">Uso medicamento contínuo</div>
-                    <div class="data-value" th:text="${relatorio.usoMedicamentoContinuo} ? 'Sim' : 'Não'">Não</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">Medicamento</div>
-                    <div class="data-value" th:text="${relatorio.medicamento}">Medicamento</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">Desaparecidos?</div>
-                    <div class="data-value" th:text="${relatorio.possuiDesaparecidos} ? 'Sim' : 'Não'">Não</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">Qtd desaparecidos</div>
-                    <div class="data-value" th:text="${relatorio.quantidadeDesaparecidos}">0</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">Qtd feridos</div>
-                    <div class="data-value" th:text="${relatorio.quantidadeFeridos}">0</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">Qtd óbitos</div>
-                    <div class="data-value" th:text="${relatorio.quantidadeObitos}">0</div>
-                </div>
-                <div class="col-md-12">
-                    <div class="data-label">Observações necessidade</div>
-                    <div class="data-value" th:text="${relatorio.observacaoNecessidades}">Observações</div>
-                </div>
-            </div>
+        <div class="table-responsive" th:unless="${#lists.isEmpty(camposRenderizados)}">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                <tr>
+                    <th style="width: 30%">Campo</th>
+                    <th>Valor</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="campo : ${camposRenderizados}">
+                    <td class="data-label" th:text="${campo.rotulo}">Campo</td>
+                    <td>
+                        <div th:if="${campo.tipo.name() == 'IMAGEM'}" class="d-flex flex-wrap gap-2">
+                            <th:block th:each="f : ${fotos}">
+                                <a th:if="${f.chave == campo.chave}" th:href="@{${f.caminho}}" target="_blank">
+                                    <img th:src="@{${f.caminho}}"
+                                         class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;"
+                                         th:alt="${f.nomeOriginal}">
+                                </a>
+                            </th:block>
+                        </div>
+                        <span th:if="${campo.tipo.name() != 'IMAGEM'}" th:text="${campo.valor}">Valor</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
         </div>
+    </div>
 
-        <div class="detail-card">
-            <div class="section-title">Assistência Necessária</div>
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <div class="data-label">Água potável (5L)</div>
-                    <div class="data-value" th:text="${relatorio.qtdAguaPotavel5L} ?: 0">0</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">Colchões solteiro</div>
-                    <div class="data-value" th:text="${relatorio.qtdColchoesSolteiro} ?: 0">0</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">Colchões casal</div>
-                    <div class="data-value" th:text="${relatorio.qtdColchoesCasal} ?: 0">0</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">Cestas básicas</div>
-                    <div class="data-value" th:text="${relatorio.qtdCestasBasicas} ?: 0">0</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">Kits higiene pessoal</div>
-                    <div class="data-value" th:text="${relatorio.qtdKitHigienePessoal} ?: 0">0</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">Kits limpeza</div>
-                    <div class="data-value" th:text="${relatorio.qtdKitLimpeza} ?: 0">0</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">Móveis</div>
-                    <div class="data-value" th:text="${relatorio.qtdMoveis} ?: 0">0</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">Telhas 6mm</div>
-                    <div class="data-value" th:text="${relatorio.qtdTelhas6mm} ?: 0">0</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">Telhas 4mm</div>
-                    <div class="data-value" th:text="${relatorio.qtdTelhas4mm} ?: 0">0</div>
-                </div>
-                <div class="col-md-3">
-                    <div class="data-label">Roupas</div>
-                    <div class="data-value" th:text="${relatorio.qtdRoupas} ?: 0">0</div>
-                </div>
-                <div class="col-md-12">
-                    <div class="data-label">Outras necessidades</div>
-                    <div class="data-value" th:text="${relatorio.outrasNecessidades} ?: '-'">Outras</div>
-                </div>
-                <div class="col-md-12">
-                    <div class="data-label">Observações assistência</div>
-                    <div class="data-value" th:text="${relatorio.observacaoAssistencia} ?: '-'">Observações</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="detail-card">
-            <div class="section-title">Localização</div>
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="data-label">Latitude</div>
-                    <div class="data-value" th:text="${relatorio.latitude}">0</div>
-                </div>
-                <div class="col-md-4">
-                    <div class="data-label">Longitude</div>
-                    <div class="data-value" th:text="${relatorio.longitude}">0</div>
-                </div>
-                <div class="col-md-4">
-                    <div class="data-label d-flex align-items-center gap-2">
-                        Localização Google Maps
-                    </div>
-                    <div class="data-value d-flex align-items-center gap-2">
-                        <a th:if="${googleMapsUrl}" th:href="${googleMapsUrl}" target="_blank" rel="noopener"
-                           class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-geo-alt"></i> Abrir no Google Maps
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="mt-3" th:if="${fotoResidenciaUrls != null and !#lists.isEmpty(fotoResidenciaUrls)}">
-                <div class="data-label">Fotos residência</div>
-                <div class="foto-residencia-grid mt-2">
-                    <img th:each="fotoUrl : ${fotoResidenciaUrls}" th:src="${fotoUrl}" alt="Foto da residência"
-                         class="img-fluid rounded foto-residencia">
+    <div class="detail-card" th:if="${not #lists.isEmpty(fotos)}">
+        <div class="section-title"><i class="bi bi-images me-2"></i>Imagens Anexadas</div>
+        <div class="foto-residencia-grid">
+            <div th:each="f : ${fotos}" class="card h-100 border-0 shadow-sm foto-card">
+                <a th:href="@{${f.caminho}}" target="_blank">
+                    <img th:src="@{${f.caminho}}"
+                         class="card-img-top foto-residencia" th:alt="${f.nomeOriginal}">
+                </a>
+                <div class="card-body p-2 text-center bg-light">
+                    <small class="text-muted d-block text-truncate" th:text="${f.nomeOriginal}">nome-da-foto.jpg</small>
                 </div>
             </div>
         </div>
@@ -300,26 +150,6 @@
 
 </th:block>
 
-<th:block th:fragment="custom-scripts">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
-    <script>
-        function exportToPdf(btn){
-            var filename = btn && btn.getAttribute('data-filename') ? btn.getAttribute('data-filename') : 'relatorio.pdf';
-            var element = document.getElementById('report-content');
-            if(!element){
-                alert('Conteúdo do relatório não encontrado para exportação.');
-                return;
-            }
-            var opt = {
-                margin:       0.5,
-                filename:     filename,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, allowTaint: false },
-                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-            };
-            html2pdf().set(opt).from(element).save();
-        }
-    </script>
-</th:block>
+<th:block th:fragment="custom-scripts"></th:block>
 </body>
 </html>

@@ -60,7 +60,7 @@
                     <thead>
                     <tr>
                         <th>Data</th>
-                        <th>Nome atingido</th>
+                        <th>Template</th>
                         <th>Cidade</th>
                         <th>Ação</th>
                     </tr>
@@ -70,9 +70,9 @@
                         <td colspan="4" class="text-center text-muted py-4">Nenhum relatório vinculado a este desastre.</td>
                     </tr>
                     <tr th:each="relatorio : ${relatoriosVinculados}">
-                        <td th:text="${#temporals.format(relatorio.dataDesastre, 'dd/MM/yyyy HH:mm')}">01/01/2026 09:00</td>
-                        <td th:text="${relatorio.nomeAtingido}">Nome</td>
-                        <td th:text="${relatorio.cidadeAtingido}">Cidade</td>
+                        <td th:text="${#temporals.format(relatorio.dataRegistro, 'dd/MM/yyyy HH:mm')}">01/01/2026 09:00</td>
+                        <td th:text="${relatorio.template != null ? relatorio.template.nome : '-'}">Template</td>
+                        <td th:text="${relatorio.cidade}">Cidade</td>
                         <td>
                             <a th:href="@{/relatorios/{id}(id=${relatorio.id})}" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-eye"></i> Ver relatório

@@ -91,16 +91,6 @@
                             <input id="nome" name="nome" class="form-control" required maxlength="100">
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label" for="templateRelatorioFamilias">Template JRXML (relativo)</label>
-                            <input id="templateRelatorioFamilias"
-                                   name="templateRelatorioFamilias"
-                                   class="form-control"
-                                   maxlength="255"
-                                   placeholder="relatorioFamilias.jrxml">
-                            <small class="text-muted">Caminho final: base-dir/{id-da-regional}/seu-arquivo.jrxml.</small>
-                        </div>
-
                         <button type="submit" class="btn btn-primary">Salvar regional</button>
                     </form>
                 </div>
@@ -183,18 +173,16 @@
                             <thead>
                             <tr>
                                 <th>Regional</th>
-                                <th>Template JRXML</th>
                                 <th>Municípios</th>
                                 <th>Ações</th>
                             </tr>
                             </thead>
                             <tbody>
                             <tr th:if="${#lists.isEmpty(regionaisPage.content)}">
-                                <td colspan="4" class="text-center text-muted py-4">Nenhuma regional cadastrada.</td>
+                                <td colspan="3" class="text-center text-muted py-4">Nenhuma regional cadastrada.</td>
                             </tr>
                             <tr th:each="regional : ${regionaisPage.content}">
                                 <td th:text="${regional.nome}">Regional</td>
-                                <td th:text="${#strings.isEmpty(regional.templateRelatorioFamilias) ? 'relatorioFamilias.jrxml' : regional.templateRelatorioFamilias}">relatorioFamilias.jrxml</td>
                                 <td>
                                     <span th:if="${#lists.isEmpty(regional.municipais)}" class="text-muted">Sem municípios vinculados</span>
                                     <span th:each="municipal : ${regional.municipais}" class="badge bg-primary me-1 mb-1"
@@ -352,5 +340,4 @@
 </th:block>
 </body>
 </html>
-
 

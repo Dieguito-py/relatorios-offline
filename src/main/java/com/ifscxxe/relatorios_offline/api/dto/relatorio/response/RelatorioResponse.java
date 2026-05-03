@@ -4,9 +4,11 @@ import java.time.LocalDateTime;
 
 public record RelatorioResponse(
         Long id,
-        LocalDateTime dataDesastre,
-        String nomeAtingido,
-        String cidadeAtingido
+        LocalDateTime dataRegistro,
+        Long templateId,
+        String cidade,
+        Long municipalId,
+        Long regionalId
 ) {}
 
 

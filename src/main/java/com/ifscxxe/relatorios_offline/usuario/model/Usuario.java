@@ -2,12 +2,10 @@ package com.ifscxxe.relatorios_offline.usuario.model;
 
 import com.ifscxxe.relatorios_offline.coordenadoria.model.Municipal;
 import com.ifscxxe.relatorios_offline.coordenadoria.model.Regional;
-import com.ifscxxe.relatorios_offline.relatorio.model.CadastroFamilia;
 import jakarta.persistence.*;
 import lombok.Data;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Data
@@ -45,7 +43,5 @@ public class Usuario {
     @ManyToOne
     @JoinColumn(name = "regional_id")
     private Regional regional;
-
-    @OneToMany(mappedBy = "usuario")
-    private List<CadastroFamilia> cadastrosFamilia;
+    
 }

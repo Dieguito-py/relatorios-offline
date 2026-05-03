@@ -2,8 +2,8 @@ package com.ifscxxe.relatorios_offline.usuario.controller;
 
 import com.ifscxxe.relatorios_offline.coordenadoria.model.Municipal;
 import com.ifscxxe.relatorios_offline.coordenadoria.repository.MunicipalRepository;
-import com.ifscxxe.relatorios_offline.relatorio.model.CadastroFamilia;
-import com.ifscxxe.relatorios_offline.relatorio.repository.CadastroFamiliaRepository;
+import com.ifscxxe.relatorios_offline.relatorio.model.RelatorioDinamico;
+import com.ifscxxe.relatorios_offline.relatorio.repository.RelatorioDinamicoRepository;
 import com.ifscxxe.relatorios_offline.usuario.model.Role;
 import com.ifscxxe.relatorios_offline.usuario.model.Usuario;
 import com.ifscxxe.relatorios_offline.usuario.repository.UsuarioRepository;
@@ -30,16 +30,16 @@ import java.util.List;
 public class SuperAdminUsuarioController {
 
     private final UsuarioRepository usuarioRepository;
-    private final CadastroFamiliaRepository cadastroFamiliaRepository;
+    private final RelatorioDinamicoRepository relatorioDinamicoRepository;
     private final MunicipalRepository municipalRepository;
     private final PasswordEncoder passwordEncoder;
 
     public SuperAdminUsuarioController(UsuarioRepository usuarioRepository,
-                                       CadastroFamiliaRepository cadastroFamiliaRepository,
+                                       RelatorioDinamicoRepository relatorioDinamicoRepository,
                                        MunicipalRepository municipalRepository,
                                        PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
-        this.cadastroFamiliaRepository = cadastroFamiliaRepository;
+        this.relatorioDinamicoRepository = relatorioDinamicoRepository;
         this.municipalRepository = municipalRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -176,7 +176,7 @@ public class SuperAdminUsuarioController {
             }
         }
 
-        List<CadastroFamilia> relatorios = cadastroFamiliaRepository.findByUsuarioIdOrderByDataDesastreDesc(id);
+        List<RelatorioDinamico> relatorios = relatorioDinamicoRepository.findByUsuarioIdOrderByDataRegistroDesc(id);
         model.addAttribute("usuario", usuario);
         model.addAttribute("relatorios", relatorios);
         model.addAttribute("pageTitle", "Relatórios de " + usuario.getNome());
